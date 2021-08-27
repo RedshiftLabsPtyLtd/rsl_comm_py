@@ -1,0 +1,13 @@
+um7_[a-zA-Z0-9]*.json
+.idea
+**__pycache__*
+dist/*
+build/*
+*.egg-info/*
+**/__pycache__/
+*.log
+**py_accessor.py
+shearwater*.h
+**shearwater_creg_*.json
+**shearwater_hidden_*.json
+**ShearwaterConfiguration.py
