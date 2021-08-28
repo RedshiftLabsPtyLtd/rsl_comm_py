@@ -1,7 +1,7 @@
 import os.path
 import pytest
 import struct
-from um7py.rsl_generator import RslGenerator
+from rsl_comm_py.rsl_generator import RslGenerator
 
 
 @pytest.fixture

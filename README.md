@@ -1,5 +1,9 @@
 # RSL Comm Python Driver
 
+[![PyPI version](https://badge.fury.io/py/rsl_comm_py.svg)](https://badge.fury.io/py/rsl_comm_py)
+![test and package](https://github.com/RedshiftLabsPtyLtd/rsl_comm_py/workflows/test%20and%20package/badge.svg)
+
+
 **TL;DR:** *"Swiss army knife"* for using 
 the [`UM7`](https://redshiftlabs.com.au/product/um7-orientation-sensor/), `UM8`,
 and  `shearwater` orientation sensors with Python 3 (Python 3.7+).
@@ -18,25 +22,13 @@ but this is not tested yet).
 
 The driver has the following capabilities: 
 
-* read / write single `UM7` registers over `SPI`;
+* read / write single `UM7`, `UM8`, `shearwater` registers over `SPI`;
 
-* read / write single `UM7` registers over `UART`;
+* read / write single `UM7`, `UM8`, `shearwater` registers over `UART`;
 
-* receive broadcast packets from the `UM7` sensor over `UART`;
+* receive broadcast packets from the `UM7`, `UM8`, `shearwater` sensor over `UART`;
 
-* read / write single `UM8` registers over `SPI`;
-
-* read / write single `UM8` registers over `UART`;
-
-* receive broadcast packets from the `UM8` sensor over `UART`;
-
-* read / write single `shearwater` registers over `SPI`;
-
-* read / write single `shearwater` registers over `UART`;
-
-* receive broadcast packets from the `shearwater` sensor over `UART`;
-
-* register map and interpretation of the sensor registers for `UM7`, `UM8`, and `shearwater`.
+* register map and interpretation of the sensor registers for `UM7`, `UM8`, `shearwater`.
 
 ## Checking out the repo with submodules:
 
@@ -69,23 +61,23 @@ the repo, pointing exactly to the commit specified in this repository.
 High-level overview of folders and files in the repo:
 
 * [`examples`](rsl_comm_py/examples) package with example code for receiving broadcast / reading / writing `shearwater` or `UM7` registers;
-* [`rsl_xml_svd`](./rsl_xml_svd) package that stores `UM7` and `shearwater` registers data in SVD (or **S**ystem **V**iew **D**escription) format and parsing code. For content description of the package, look at the [repo](https://bitbucket.org/kselyunin/rsl_xml_svd/src/master/);
-* [`test`](./test)  [`pytest`](https://docs.pytest.org/en/latest/) tests for register map code generation;
-* [`um7py`](./um7py) top-level python package:
-    * [`um7py/rsl_generate_shearwater.py`](./um7py/rsl_generate_shearwater.py): invoke `python` and `C/C++` code generation for `shearwater` and save generated results;
-    * [`um7py/rsl_generate_um7.py`](./um7py/rsl_generate_um7.py): invoke code generation for `UM7` and save generated results;
-    * [`um7py/rsl_generator.py`](./um7py/rsl_generator.py): code generation for [`um7_registers.py`](./um7py/um7_registers.py) and [`shearwater_registers.py`](./um7py/shearwater_registers.py) from the SVD file;
-    * [`um7py/rsl_spi.py`](./um7py/rsl_spi.py): generic SPI driver classes for [USB-ISS](https://www.robot-electronics.co.uk/htm/usb_iss_tech.htm) or SPI-bus (Linux);
-    * [`um7py/serve_um7_autodetect.py`](./um7py/serve_um7_autodetect.py): copies the [`um7_autodetect.py`](./um7py/um7_autodetect.py) script to the desired location;
-    * [`um7py/um7_autodetect.py`](./um7py/um7_autodetect.py): UM7 script for saving configuration for connection to the [USB Expansion Board](https://redshiftlabs.com.au/product/usb-expansion-board/);  
-    * [`um7py/shearwater_broadcast_packets.py`](./um7py/shearwater_broadcast_packets.py): [dataclasses](https://docs.python.org/3/library/dataclasses.html) for `shearwater` broadcast messages;
-    * [`um7py/shearwater_registers.py`](./um7py/shearwater_registers.py): `shearwater` register description file;
-    * [`um7py/shearwater_serial.py`](./um7py/shearwater_serial.py): `shearwater` UART driver;
-    * [`um7py/shearwater_spi.py`](./um7py/shearwater_spi.py): `shearwater` SPI driver for [USB-ISS](https://www.robot-electronics.co.uk/htm/usb_iss_tech.htm) or SPI-bus (Linux);
-    * [`um7py/um7_broadcast_packets.py`](./um7py/um7_broadcast_packets.py): [dataclasses](https://docs.python.org/3/library/dataclasses.html) for `UM7` broadcast messages;
-    * [`um7py/um7_registers.py`](./um7py/um7_registers.py): `UM7` register description file;
-    * [`um7py/um7_serial.py`](./um7py/um7_serial.py): `UM7` UART driver;
-    * [`um7py/um7_spi.py`](./um7py/um7_spi.py): `UM7` SPI driver for [USB-ISS](https://www.robot-electronics.co.uk/htm/usb_iss_tech.htm) or SPI-bus (Linux);
+* [`rsl_xml_svd`](rsl_comm_py/rsl_xml_svd) package that stores `UM7` and `shearwater` registers data in SVD (or **S**ystem **V**iew **D**escription) format and parsing code. For content description of the package, look at the [repo](https://bitbucket.org/kselyunin/rsl_xml_svd/src/master/);
+* [`test`](rsl_comm_py/test)  [`pytest`](https://docs.pytest.org/en/latest/) tests for register map code generation;
+* [`rsl_comm_py`](rsl_comm_py/rsl_comm_py) top-level python package:
+    * [`rsl_comm_py/rsl_generate_shearwater.py`](./rsl_comm_py/rsl_generate_shearwater.py): invoke `python` and `C/C++` code generation for `shearwater` and save generated results;
+    * [`rsl_comm_py/rsl_generate_um7.py`](./rsl_comm_py/rsl_generate_um7.py): invoke code generation for `UM7` and save generated results;
+    * [`rsl_comm_py/rsl_generator.py`](./rsl_comm_py/rsl_generator.py): code generation for [`um7_registers.py`](./rsl_comm_py/um7_registers.py) and [`shearwater_registers.py`](./rsl_comm_py/shearwater_registers.py) from the SVD file;
+    * [`rsl_comm_py/rsl_spi.py`](./rsl_comm_py/rsl_spi.py): generic SPI driver classes for [USB-ISS](https://www.robot-electronics.co.uk/htm/usb_iss_tech.htm) or SPI-bus (Linux);
+    * [`rsl_comm_py/serve_um7_autodetect.py`](./rsl_comm_py/serve_um7_autodetect.py): copies the [`um7_autodetect.py`](./rsl_comm_py/um7_autodetect.py) script to the desired location;
+    * [`rsl_comm_py/um7_autodetect.py`](./rsl_comm_py/um7_autodetect.py): UM7 script for saving configuration for connection to the [USB Expansion Board](https://redshiftlabs.com.au/product/usb-expansion-board/);  
+    * [`rsl_comm_py/shearwater_broadcast_packets.py`](./rsl_comm_py/shearwater_broadcast_packets.py): [dataclasses](https://docs.python.org/3/library/dataclasses.html) for `shearwater` broadcast messages;
+    * [`rsl_comm_py/shearwater_registers.py`](./rsl_comm_py/shearwater_registers.py): `shearwater` register description file;
+    * [`rsl_comm_py/shearwater_serial.py`](./rsl_comm_py/shearwater_serial.py): `shearwater` UART driver;
+    * [`rsl_comm_py/shearwater_spi.py`](./rsl_comm_py/shearwater_spi.py): `shearwater` SPI driver for [USB-ISS](https://www.robot-electronics.co.uk/htm/usb_iss_tech.htm) or SPI-bus (Linux);
+    * [`rsl_comm_py/um7_broadcast_packets.py`](./rsl_comm_py/um7_broadcast_packets.py): [dataclasses](https://docs.python.org/3/library/dataclasses.html) for `UM7` broadcast messages;
+    * [`rsl_comm_py/um7_registers.py`](./rsl_comm_py/um7_registers.py): `UM7` register description file;
+    * [`rsl_comm_py/um7_serial.py`](./rsl_comm_py/um7_serial.py): `UM7` UART driver;
+    * [`rsl_comm_py/um7_spi.py`](./rsl_comm_py/um7_spi.py): `UM7` SPI driver for [USB-ISS](https://www.robot-electronics.co.uk/htm/usb_iss_tech.htm) or SPI-bus (Linux);
 
 ## Python driver 101
 
