@@ -14,7 +14,7 @@ version_minor = '0' if not version_info.get('VERSION_MINOR') else version_info['
 pipeline_number = '0' if not environ.get('GITHUB_RUN_NUMBER') else environ['GITHUB_RUN_NUMBER']
 
 setuptools.setup(
-    name="um7py",
+    name="rsl_comm_py",
     version=f"{version_major}.{version_minor}.{pipeline_number}",
     author="Redshift Labs Pty Ltd, Dr. Konstantin Selyunin",
     author_email="selyunin.k.v@gmail.com",
