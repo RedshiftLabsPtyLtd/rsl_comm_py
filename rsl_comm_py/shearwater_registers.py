@@ -11,7 +11,7 @@ import struct
 from abc import abstractmethod, ABC
 from typing import Union, Tuple
 
-from rsl_xml_svd.rsl_svd_parser import RslSvdParser
+from .rsl_xml_svd.rsl_svd_parser import RslSvdParser
 
 
 class ShearWaterRegisters(ABC):

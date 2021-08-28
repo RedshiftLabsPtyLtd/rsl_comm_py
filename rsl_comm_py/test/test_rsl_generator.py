@@ -1,12 +1,13 @@
-import os.path
 import pytest
 import struct
+from pathlib import Path
 from rsl_comm_py.rsl_generator import RslGenerator
 
 
 @pytest.fixture
 def rsl_generator() -> RslGenerator:
-    svd_file = './rsl_xml_svd/shearwater.svd'
+    current_folder = Path(__file__).parent
+    svd_file = current_folder.parent / 'rsl_xml_svd' / 'shearwater.svd'
     return RslGenerator(svd_file=svd_file)
 
 

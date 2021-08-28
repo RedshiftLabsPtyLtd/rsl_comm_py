@@ -3,15 +3,14 @@
 # Author: Dr. Konstantin Selyunin
 # License: MIT
 
-import os
-import os.path
 import textwrap
 
 from typing import Tuple
+from pathlib import Path
 
 from jinja2 import Environment, DictLoader
 
-from rsl_xml_svd.rsl_svd_parser import Register, RslSvdParser
+from .rsl_xml_svd.rsl_svd_parser import Register, RslSvdParser
 
 
 class RslGenerator(RslSvdParser):
@@ -32,8 +31,8 @@ class RslGenerator(RslSvdParser):
         return payload_description[:-1]
 
     @staticmethod
-    def render_template_to_str(template_file: str, params_dict: dict) -> str:
-        if not os.path.exists(template_file):
+    def render_template_to_str(template_file: Path, params_dict: dict) -> str:
+        if not template_file.exists():
             raise FileNotFoundError("Template file to render is not found!")
 
         with open(template_file, 'r') as fd:
@@ -163,8 +162,8 @@ class RslGenerator(RslSvdParser):
             'interpreted_receive_fields': textwrap.indent(generated_code, ' ' * 8),
             'return_values': return_vars
         }
-        script_folder = os.path.dirname(__file__)
-        getter_template_file = os.path.join(script_folder, os.pardir, 'um7py/templates/getter_template.jinja2')
+        script_folder = Path(__file__).parent
+        getter_template_file = script_folder / 'templates' / 'getter_template.jinja2'
         getter = RslGenerator.render_template_to_str(getter_template_file, params_dict)
         return getter
 
@@ -172,9 +171,8 @@ class RslGenerator(RslSvdParser):
         params_dict = {
             'register_name': register.name.lower()
         }
-        script_folder = os.path.dirname(__file__)
-        no_getter_template_file = os.path.join(script_folder, os.pardir,
-                                               'um7py/templates/no_getter_template.jinja2')
+        script_folder = Path(__file__).parent
+        no_getter_template_file = script_folder / 'templates' / 'no_getter_template.jinja2'
         no_getter = RslGenerator.render_template_to_str(no_getter_template_file, params_dict)
         return no_getter
 
@@ -184,9 +182,8 @@ class RslGenerator(RslSvdParser):
             'register_addr': register.address,
             'hidden': is_hidden
         }
-        script_folder = os.path.dirname(__file__)
-        setter_template_file = os.path.join(script_folder, os.pardir,
-                                            'um7py/templates/setter_template.jinja2')
+        script_folder = Path(__file__).parent
+        setter_template_file = script_folder / 'templates' / 'setter_template.jinja2'
         setter = RslGenerator.render_template_to_str(setter_template_file, params_dict)
         return setter
 
