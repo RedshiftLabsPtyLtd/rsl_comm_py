@@ -1,0 +1,74 @@
+/*
+ *
+ * MIT License
+ *
+ * Copyright (c) 2020 Dr. Konstantin Selyunin
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ *
+ * Authors: Michael Malloy & Dr. Konstantin Selyunin
+ * Version: {{ version }}
+ * Date: {{ date }}
+*/
+#ifndef {{ define_guard }}
+#define {{ define_guard }}
+
+#include <stdint.h>
+
+{% for register in regs %}
+{##define {{ '{:<30s}'.format(register.name + '_ADDR') }} {{ '0x{:02X}'.format(register.address) }}#}
+/*
+{{ register.description | wordwrap(78) }}
+*/
+    {%- for field in register.fields %}
+#define {{ register.name }}_{{ field.name }}_Pos ({{ field.bit_range[1] }}U)
+#define {{ register.name }}_{{ field.name }}_Msk ({{ '0x{:X}'.format(2 ** (field.bit_range[0] - field.bit_range[1] + 1) - 1) }}U)
+        {% if field.enumerated_values is not none %}
+typedef enum {
+            {%- for enum in field.enumerated_values %}
+    {{ field.name }}_{{ enum.name }} = {{ enum.value }},  /* {{ enum.name }}: {{ enum.description }} */
+            {%- endfor %}
+} {{ register.name }}_{{ field.name }}_Enum;
+        {%- endif %}
+    {%- endfor %}
+union {{ register.name }} {
+    uint32_t raw_reg;
+    struct {
+        {%- for el in register.get_fields_and_gaps() -%}
+            {%- for field_or_gap, bit_length in el.items() -%}
+                {%- if field_or_gap is not none -%}
+                    {%- set field = register.find_field_by(name=field_or_gap) -%}
+                    {%- set field_type = field.get_c_type() -%}
+                    {%- if field_type == 'float' %}
+        float {{ field_or_gap }};
+                    {% elif 'char' in field_type %}
+        {{ field_type }} {{ field_or_gap }}[4];
+                    {%- else %}
+        {{ field_type }} {{ field_or_gap }}: {{ bit_length }};
+                    {%- endif -%}
+                {%- else %}
+        uint32_t: {{ bit_length }};
+                {%- endif -%}
+            {%- endfor -%}
+        {% endfor %}
+    } fields;
+};
+{% endfor %}
+
+#endif //{{ define_guard }}

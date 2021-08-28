@@ -1,0 +1,24 @@
+@property
+def {{ register_name }}(self):
+    """
+{{ comment_short }}
+    Payload structure:
+{{ payload_structure_description }}
+    :return: {{ return_field_description }}
+    """
+    addr = {{ '0x{:02X}'.format(register_addr) }}
+    {% if not hidden -%}
+    ok, payload = self.read_register(addr)
+    {%- else -%}
+    ok, payload = self.read_register(addr, hidden=True)
+    {%- endif %}
+    if ok:
+        {% if not hidden -%}
+        reg = self.svd_parser.find_register_by(name='{{ register_svd_name }}')
+        {%- else -%}
+        reg = self.svd_parser.find_hidden_register_by(name='{{ register_svd_name }}')
+        {%- endif %}
+{{ interpreted_receive_fields }}
+        return {{ return_values }}
+
+

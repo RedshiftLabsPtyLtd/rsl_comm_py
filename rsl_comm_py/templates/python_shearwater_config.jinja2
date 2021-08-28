@@ -1,0 +1,467 @@
+# UM6Configuration object
+
+# - structure for storing the state of UM6 configuration registers
+# - read/write state to/from disk (CSV or XML file?)
+# - also includes serial/ID number for uniquely identifying chips
+# - data is stored in UM6_Config_Value objects
+# - complete register map 
+#
+# * only designed for UM6-LT firmware version 2B
+# * does not communicate with UM6
+
+import cStringIO
+import collections
+import numpy as np
+from UM6ConfigValue import *
+from HelperFunctions import *
+from binascii import hexlify
+#import binascii as ba # for hexlify: ba.hexlify(mybinarydata)
+
+class ShearwaterConfiguration:
+
+	firmware = "SHWT"
+
+	# configuration item properties as dictionary of tuples
+	# name, register address, # bits, start bit, type
+	Config = collections.namedtuple('Config', ['address', 'hidden', 'bits', 'start', 'type_name'])
+
+	config_item = collections.OrderedDict()
+{%- for register in config_regs %}
+{%- for field in register.fields  %}
+    {%- if field.bit_range[0] - field.bit_range[1] == 0 %}
+	config_item['{{ '{}'.format(field.name) }}'] = Config({{ register.address }},0,{{ field.bit_range[0] - field.bit_range[1] + 1 }},{{ field.bit_range[1] }},'boolean')
+    {%- else %}
+	config_item['{{ '{}'.format(field.name) }}'] = Config({{ register.address }},0,{{ field.bit_range[0] - field.bit_range[1] + 1 }},{{ field.bit_range[1] }},'{{ 'byte' if field.data_type in ['bitField', 'uint8_t'] else field.data_type }}')
+    {%- endif %}
+{%- endfor  %}
+{%- endfor %}
+
+	# begin hidden registers
+{%- for register in hidden_regs %}
+{%- for field in register.fields  %}
+	config_item['{{ '{}'.format(field.name) }}'] = Config({{ register.address }},1,{{ field.bit_range[0] - field.bit_range[1] + 1 }},{{ field.bit_range[1] }},'{{ 'byte' if field.data_type in ['uint8_t', 'bitField'] else field.data_type }}')
+{%- endfor  %}
+{%- endfor %}
+
+	# constants
+	REGISTER_COUNT = {{ config_regs | length }}		# configuration registers
+	HIDDEN_REGISTER_COUNT = {{ hidden_regs | length }}	# hidden configuration registers
+	DATA_START = {{ data_regs[0].address }}		# data registers start addr
+	COMMAND_START = {{ command_regs[0].address }}	# command registers start addr
+
+	def __init__(self, _chip_id='-', _fw_version=-1):
+		'''do constructor stuff...'''
+		self.chip_id = _chip_id	# chip unique id number
+		self.fw_version = _fw_version	# firmware version
+		self.register = []
+		self.hidden_register = []
+		# these reserved hidden registers should be ignored and not read nor written to
+		self.reserved_register = [] #[3,4,5,6,7,8,9,11,14,15,16,20,21,22,23,24]
+
+		# list of configuration values
+		temp = []
+		for name,val in self.config_item.items():
+			temp.append([name,None])	# None is for value
+		self.config_value = collections.OrderedDict(temp)
+
+		# full registers
+		# one 32 bit float per register or two 16 bit ints per register
+		# plus boolean to keep track of whether register has been set
+		# initalize register list. second value in sublist indicates whether value is valid
+		for i in range(self.REGISTER_COUNT):
+			self.register.append([0,False])
+		# initialize hidden register list
+		for i in range(self.HIDDEN_REGISTER_COUNT):
+			self.hidden_register.append([0,False])
+
+
+	def print_config_values(self, fullpath=None):
+		'''	display config values or write config values to CSV file
+			print floats with 9 digits of precision so original value can be recovered
+			http://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html#1251
+			ex: print name,"\t",'%.9g' % val
+		'''
+		# set date & time
+		now = get_datetime_string()
+		opening = (	"Compass ID", self.chip_id + "\n" +
+					"Firmware version", self.fw_version + "\n"
+					"Configuration date", now + "\n","")
+		if fullpath != None:
+			# open file for writing
+			with open(fullpath,'w') as output:
+				# print values to file
+				#print >>output,"Compass ID number," + self.chip_id
+				#print >>output,"Compass firmware version," + self.fw_version
+				#print >>output,"Compass configuration date," + now
+				#print >>output,"," # blank line in CSV file
+				print >>output,",".join(opening)
+				print >>output,"name,value"
+				for name,val in self.config_value.items():
+					if val != None:
+						if self.config_item[name].type_name == "float":
+							#if val == 0 or val % 1 == 1:
+							if 0 in (val, val % 1):
+								print >>output,name + "," + '%.1f' % val
+							else:
+								print >>output,name + "," + '%.9g' % val
+
+						else:
+							print >>output,name + "," + str(val)
+					else:
+						print >>output,name + ",not set"
+				# print registers
+				print >>output,","
+				self.print_registers(output)
+				print >>output,","
+				self.print_hidden_registers(output)
+
+		else:
+			# print values to screen
+			#print "Compass ID number",self.chip_id
+			#print "Compass firmware version", self.fw_version
+			#print "Compass configuration date", now
+			print " ".join(opening)
+			#print self.chip_id,self.fw_version
+			for name,val in self.config_value.items():
+				if val != None:
+					if self.config_item[name].type_name == "float":
+						# print with 9 digits of precision so original value can be recovered
+						if 0 in (val, val % 1):
+							print name + "\t\t" + '%.1f' % val
+						else:
+							print name + "\t\t" + '%.9g' % val
+					else:
+						print name,"\t\t",val
+				else:
+					print name,"\t\t","not set"
+
+	#def get_value(self, config_details):
+	def get_value(self,name):
+		'''check if value is set and return'''
+		if self.config_value[name] != None:
+			return self.config_value[name]
+		else:
+			print name,"not set"
+
+	# ########## TEST ME!!! ##############
+# I don't think this is actually used anywhere
+#	def extract_value(self, name):
+#		'''	extract numerical value of config_value from register
+#			register is assumed to be set (register[#][1] == True)
+#		'''
+#		# construct object to get what we need
+#		val = UM6ConfigValue(self.config_value[name])
+#		# extract value from register
+#		return val.unpack_value(self.register[self.config_item[name].address][0])
+
+# need to populate register function to test stuff #######
+
+	def set_value_from_register(self, name):
+		'''set configuration value based on whats in register array'''
+		reg_addr = self.config_item[name].address
+		# check if register is hidden
+		if (self.config_item[name].hidden) == 1:
+			# hidden register
+			if self.hidden_register[reg_addr][1]:
+				# set value based from register data
+				self.config_value[name] = self.hidden_register[reg_addr][0]
+			else:
+				print "could not set " + name + " from hidden register: hidden register " + reg_addr + " not set"
+		else:
+			# visible register
+			if self.register[reg_addr][1]:
+				# set value based from register data
+				self.config_value[name] = self.register[reg_addr][0]
+			else:
+				print "could not set " + name + " from register: register " + reg_addr + " not set"
+
+	def update_partial_register(self, name):
+		'''set bits in register for specific config value'''
+		temp = 0
+		# construct object to get what we need
+		val = UM6ConfigValue(self.config_item[name])
+
+		# check if register is hidden #
+		if (self.config_item[name].hidden) == 1:
+			reg = self.hidden_register[self.config_item[name].address][0]
+		else:
+			reg = self.register[self.config_item[name].address][0]
+		# unpack to perform bitwise operations
+		temp = unpack('>I',reg)[0]
+		# clear current value
+		temp &= val.get_bitmask()
+		# set bits in register to new value
+		temp |= val.pack_value(self.config_value[name])
+
+		# pack to save as byte array
+		# check if register is hidden #
+		if (self.config_item[name].hidden) == 1:
+			self.hidden_register[self.config_item[name].address][0] = bytearray(pack('>I',temp))
+		else:
+			self.register[self.config_item[name].address][0] = bytearray(pack('>I',temp))
+
+	def get_register_by_name(self, name):
+		'''get whole register value (4 bytes) of register containing this config name'''
+		# check if hidden #
+		if (self.config_item[name].hidden) == 1:
+			return self.hidden_register[self.config_value[name].address][0]
+		else:
+			return self.register[self.config_value[name].address][0]
+
+	def init_config_values(self):
+		'''	set value of all config values at once using data in register array
+			return True on success
+		'''
+		rtn = True
+		# check if register array has been fully populated, fail if not
+		if self.get_empty_registers():
+			print "registers not set:",self.get_empty_registers()
+			return False
+		# all registers appear populated, unpack config values
+		for name,value in self.config_value.items():
+			item = UM6ConfigValue(self.config_item[name])
+			if not item.hidden:
+				# regular config item
+				self.config_value[name] = item.unpack_value(self.register[item.address][0])
+				#print name,value,"register:",self.register[item.address][0]	# ex. Broadcast Enabled, None
+			else:
+				# hidden config item
+				self.config_value[name] = item.unpack_value(self.hidden_register[item.address][0])
+			if self.config_value[name] == None:
+				print "failed to set value from register for",name
+				rtn = False
+		#print self.chip_id,self.fw_version
+		#for name,value in self.config_value.items():
+		#	print name,value
+		return rtn
+
+	def check_config_val(self,name,val):
+		''' set config value
+			check if val is of correct type for name and value matches configuration value
+			returns True if value matches, False if value does not match
+		'''
+		if self.config_item[name].type_name == 'bool':
+			if type(val) is bool:
+				return self.config_value[name] is val
+			else:
+				return False
+		elif self.config_item[name].type_name == 'int':
+			if type(val) is int:
+				#return self.config_value[name] is val
+				return  np.allclose(self.config_value[name], val)
+			else:
+				return False
+		elif self.config_item[name].type_name == 'byte':
+			if type(val) is int:
+				if int(val) > 7:
+					# byte is more than 3 bits
+					return False
+				#return self.config_value[name] is val
+				return np.allclose(self.config_value[name], val)
+			else:
+				return False
+		elif self.config_item[name].type_name == 'float':
+			if type(val) in [float, np.float32]:
+				# compare float values
+				return np.allclose(self.config_value[name], val)
+			else:
+				return False
+		return True
+
+	def set_config_val(self,name,val):
+		''' set config value
+			check if val is of correct type for name and set val
+			returns True if value was set, False if value was wrong type
+		'''
+		if self.config_item[name].type_name == 'bool':
+			if type(val) is bool:
+				self.config_value[name] = val
+			else:
+				return False
+		elif self.config_item[name].type_name == 'int':
+			if type(val) is int:
+				self.config_value[name] = val
+			else:
+				return False
+		elif self.config_item[name].type_name == 'byte':
+			if type(val) is int:
+				if int(val) > 7:
+					# byte is more than 3 bits
+					return False
+				self.config_value[name] = val
+			else:
+				return False
+		elif self.config_item[name].type_name == 'float':
+			#if type(val) is float:
+			if type(val) in [float, np.float32]:
+				self.config_value[name] = val
+			else:
+				return False
+		return True
+
+	def set_config_val_from_string(self,name,val):
+		''' set config value from string
+			check if val is of correct type for name and set val
+			returns True if value was set, False if value was wrong type
+		'''
+		# check that key exists
+		try:
+			self.config_item[name]
+		except KeyError,err:
+			print "KeyError: ",err
+			return False
+
+		if self.config_item[name].type_name == 'bool':
+			#print "boolean! ",
+			if self.string_is_bool(val):
+				self.config_value[name] = val == 'True'
+			else:
+				return False
+		elif self.config_item[name].type_name == 'int':
+			if self.string_is_int(val):
+				self.config_value[name] = int(val)
+			else:
+				return False
+		elif self.config_item[name].type_name == 'byte':
+			if self.string_is_int(val):
+				if int(val) > 7:
+					# byte is more than 3 bits
+					return False
+				self.config_value[name] = int(val)
+			else:
+				return False
+		elif self.config_item[name].type_name == 'float':
+			if self.string_is_float(val):
+				self.config_value[name] = float(val)
+			else:
+				return False
+		return True
+
+	def string_is_int(self,s):
+		try:
+			int(s)
+			return True
+		except ValueError:
+			return False
+
+	def string_is_float(self,s):
+		try:
+			float(s)
+			return True
+		except ValueError:
+			return False
+
+	def string_is_bool(self,s):
+		try:
+			int(s)
+			return False
+		except ValueError:
+			try:
+				float(s)
+				return False
+			except ValueError:
+				return True
+
+	def get_empty_registers(self):
+		'''	check if all config registers have been populated
+			returns list of unpopulated registers
+		'''
+		regular = []
+		for idx, val in enumerate(self.register):
+			if not val[1]:
+				#print "register",idx,"not set"
+				regular.append(idx)
+		hidden = []
+		for idx, val in enumerate(self.hidden_register):
+			if not val[1]:
+				# don't include reserved registers in the list
+				if idx not in self.reserved_register:
+					#print "register",idx,"not set"
+					hidden.append(idx)
+		if hidden or regular:
+			return {"regular":regular, "hidden":hidden}
+		else:
+			return False
+
+	# NOT CURRENTLY CALLED. MIGHT BE USEFUL FOR SETTING REGISTERS FROM HEX STRINGS
+	def set_register(self, addr, value, hidden=False):
+		'''	sets register value in register array
+			value is 4 byte binary data (packed), big endian
+			register is set as 32 bit unsigned int
+			returns True on success
+		'''
+		# check addr is within valid range
+		# check if hidden ##########################################################
+		if not hidden:
+			if addr >= 0 and addr < length(self.register):
+				self.register[addr][0] = unpack('>I',value)	# set value
+				self.register[addr][1] = True	# mark this register as set
+				return True
+		else:
+			if addr >= 0 and addr < length(self.hidden_register):
+				self.hidden_register[addr][0] = unpack('>I',value)	# set value
+				self.hidden_register[addr][1] = True	# mark this register as set
+				return True
+		# haven't returned yet so must have failed
+		if not hidden:
+			print "failed to set register",addr,"to",value
+		else:
+			print "failed to set hidden register",addr,"to",value
+		return False
+
+	def print_registers(self, output=None):
+		'''print configuration registers'''
+		if output == None:
+			print "Configuration Registers,"
+			for idx,x in enumerate(self.register):
+				print str(idx) + ",",hexlify(x[0])
+		else:
+			print >>output,"Configuration Registers,"
+			print >>output,"address,value"
+			for idx,x in enumerate(self.register):
+				print >>output,str(idx) + ",",hexlify(x[0])
+
+	def print_hidden_registers(self, output=None):
+		'''print hidden configuration registers'''
+		if output == None:
+			print "Hidden Configuration Registers,"
+			for idx,x in enumerate(self.hidden_register):
+				if idx not in self.reserved_register:
+					print str(idx) + ",",hexlify(x[0])
+		else:
+			print >>output,"Hidden Configuration Registers,"
+			print >>output,"address,value"
+			for idx,x in enumerate(self.hidden_register):
+				if idx not in self.reserved_register:
+					print >>output,str(idx) + ",",hexlify(x[0])
+
+	def get_registers_for_values(self,value_names):
+		'''	return the register addresses which hold these values
+		'''
+		registers = []
+		for val in value_names:
+			registers.append((self.config_item[val].address, self.config_item[val].hidden))
+		return remove_duplicates(registers)
+
+# NOT SURE IF STUFF BELOW IS NEEDED #######################################
+# not sure why we need this.....
+#	# get partial register value (1 byte)
+#	# 	byte_num 0 = MSB
+#	# 	byte_num 3 = LSB
+#	def get_register_byte(self, addr, byte_num):
+#		int_val = 0
+#		print "reg byte",byte_num,"=",hex(self.register[addr])
+#
+#		int_val = self.get_register(addr)
+#		if (int_val != -1):
+#			int_val = self.get_register(addr) >> (3 - byte_num)*8	# shift byte to LSB position
+#			int_val &= 0x000000FF	# clear upper bytes (maybe not necessary?)
+#			return int_val
+#
+#		return -1	# fail
+
+
+
+
+
+

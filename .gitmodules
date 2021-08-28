@@ -1,0 +1,3 @@
+[submodule "rsl_comm_py/rsl_xml_svd"]
+	path = rsl_comm_py/rsl_xml_svd
+	url = git@github.com:RedshiftLabsPtyLtd/rsl_xml_svd.git

@@ -1,0 +1,16 @@
+# Author: Dr. Konstantin Selyunin
+# Version: {{ version }}
+# Date: {{ date }}
+
+from um7py.{{ module }} import {{ classname }}
+
+svd_file = 'rsl_xml_svd/{{ svd }}.svd'
+script_dir = os.path.dirname(__file__)
+device_file = os.path.join(script_dir, os.pardir, "um7py", "um7_A500CNHD.json")
+{{ object }} = {{ classname }}(device=device_file)
+
+print(f"\\n========== HIDDEN REGISTERS ===================================")
+{%- for register in regs %}
+print(f"{{ '{:<30s}'.format(register.name.lower()) }}: { {{ object }}.{{ register.name.lower() }}}")
+{%- endfor %}
+

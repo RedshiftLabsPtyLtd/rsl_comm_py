@@ -1,0 +1,8 @@
+name: rsl-env
+
+dependencies:
+  - python=3.9
+  - pyserial
+  - pip
+  - pip:
+    - pyquaternion
