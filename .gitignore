@@ -7,6 +7,7 @@ build/*
 **/__pycache__/
 *.log
 **py_accessor.py
+**.pytest_cache
 shearwater*.h
 **shearwater_creg_*.json
 **shearwater_hidden_*.json
