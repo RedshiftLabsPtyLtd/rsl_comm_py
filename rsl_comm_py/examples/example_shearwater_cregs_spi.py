@@ -7,7 +7,7 @@ import logging
 import os.path
 import sys
 
-from um7py.shearwater_spi import ShearWaterSpiUsbIss
+from rsl_comm_py.shearwater_spi import ShearWaterSpiUsbIss
 
 
 if __name__ == '__main__':

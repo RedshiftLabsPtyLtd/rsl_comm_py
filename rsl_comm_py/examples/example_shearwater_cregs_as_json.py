@@ -8,7 +8,7 @@ import os.path
 import sys
 import json
 
-from um7py.shearwater_serial import ShearWaterSerial
+from rsl_comm_py.shearwater_serial import ShearWaterSerial
 
 
 if __name__ == '__main__':

@@ -6,10 +6,9 @@
 import logging
 import os.path
 import sys
-from time import sleep
 
-from um7py.shearwater_serial import ShearWaterSerial
-from um7py.shearwater_spi import ShearWaterSpiUsbIss
+from rsl_comm_py.shearwater_serial import ShearWaterSerial
+from rsl_comm_py.shearwater_spi import ShearWaterSpiUsbIss
 
 
 if __name__ == '__main__':
