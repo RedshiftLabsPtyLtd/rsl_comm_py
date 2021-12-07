@@ -6,7 +6,8 @@
 
 **TL;DR:** *"Swiss army knife"* for using 
 the [`UM7`](https://redshiftlabs.com.au/product/um7-orientation-sensor/), `UM8`,
-and  `shearwater` orientation sensors with Python 3 (Python 3.7+).
+and  `shearwater` orientation sensors with Python 3 
+(Python 3.7+, including Python 3.10).
 
 
 `UM7` originally came with the 
@@ -92,8 +93,8 @@ Below we outline the repo structure:
 * [`rsl_comm_py/rsl_generate_um7.py`](./rsl_comm_py/rsl_generate_um7.py): invoke code generation for `UM7` and save generated results;
 * [`rsl_comm_py/rsl_generator.py`](./rsl_comm_py/rsl_generator.py): code generation for [`um7_registers.py`](./rsl_comm_py/um7_registers.py) and [`shearwater_registers.py`](./rsl_comm_py/shearwater_registers.py) from the SVD file;
 * [`rsl_comm_py/rsl_spi.py`](./rsl_comm_py/rsl_spi.py): generic SPI driver classes for [USB-ISS](https://www.robot-electronics.co.uk/htm/usb_iss_tech.htm) or SPI-bus (Linux);
-* [`rsl_comm_py/serve_um7_autodetect.py`](./rsl_comm_py/serve_um7_autodetect.py): copies the [`um7_autodetect.py`](./rsl_comm_py/um7_autodetect.py) script to the desired location;
-* [`rsl_comm_py/um7_autodetect.py`](./rsl_comm_py/um7_autodetect.py): UM7 script for saving configuration for connection to the [USB Expansion Board](https://redshiftlabs.com.au/product/usb-expansion-board/);  
+* [`rsl_comm_py/serve_rsl_autodetect.py`](./rsl_comm_py/serve_rsl_autodetect.py): copies the [`rsl_autodetect.py`](./rsl_comm_py/rsl_autodetect.py) script to the desired location;
+* [`rsl_comm_py/rsl_autodetect.py`](./rsl_comm_py/rsl_autodetect.py): a script for saving configuration for connection to the [USB Expansion Board](https://redshiftlabs.com.au/product/usb-expansion-board/);  
 * [`rsl_comm_py/shearwater_broadcast_packets.py`](./rsl_comm_py/shearwater_broadcast_packets.py): [dataclasses](https://docs.python.org/3/library/dataclasses.html) for `shearwater` broadcast messages;
 * [`rsl_comm_py/shearwater_registers.py`](./rsl_comm_py/shearwater_registers.py): `shearwater` register description file;
 * [`rsl_comm_py/shearwater_serial.py`](./rsl_comm_py/shearwater_serial.py): `shearwater` UART driver;
@@ -151,10 +152,7 @@ pip install rsl-comm-py
 
 ## Python dependencies
 
-**TL;DR:** install 
-(i) `pyserial`, 
-(ii) `pyudev` (for Linux),
-(iii) `dataclasses` (included in standard library since `python3.7`, needs to be installed for `3.6`).
+**TL;DR:** install (i) `pyserial`, `jinja2`.
 
 If you want to use SPI: if using on Linux and use SPI bus directly, install `spidev`,
 otherwise if using USB-ISS install `usb_iss` python package.
@@ -162,11 +160,14 @@ otherwise if using USB-ISS install `usb_iss` python package.
 Alternatively, one may use [`environment.yml`](./environment.yml)
 to create conda environment with dependencies resolved.
 
+If you are using `python3.6`, you need to install `dataclasses` 
+(the module is included in standard library since `python3.7`,
+and for `3.6` needs to be installed separately). 
 
 ## Python driver 101
 
 The python driver for Redshift Labs Pty Ltd orientation sensors works as follows:
-the `*.svd` file describes the register map, and the fields of registers.
+the `*.svd` (e.g. `um7.svd`) file describes the register map, and the fields of registers.
 From the `*.svd` file the `[sensor]_registers.py`
 (e.g. `um7_registers.py` or `shearwater_registers.py`) is generated.
 The files have generated methods for reading / writing single registers, 
@@ -195,85 +196,318 @@ This way the communication is done using the `spidev` python library.
 ## OS Prerequisites
 
 1. When plugged in on a Linux system, 
-the `UM7` sensor should appear 
+the `UM7`, `shearwater`, `UM8` sensor should appear 
 as `/dev/ttyUSB*` device 
 (this is only true when you are using
 [USB Expansion Board](https://www.redshiftlabs.com.au/sensors/usb-expansion-board)
 which in turn uses USB-to-serial [FTDI](https://www.ftdichip.com/)
 chip.
 
-2. Your Linux user must be a member of the
+2. If you are on a Linux machine, your Linux user must be a member of the
 `dialout` group 
 (e.g. see this [thread](https://unix.stackexchange.com/questions/14354/read-write-to-a-serial-port-without-root))
 to be able to read/write `ttyUSB*` devices 
 without root privileges.
 
-3. `udev` is installed on the system.
-We do autodetect the FTDI chip ID by relying on information from
-`udev`.
 
 
 ## Device autodetect
 
-To facilitate discovering `UM7` sensor among other
+To facilitate discovering `RSL` sensors 
+(`UM7`, `UM8`, `shearwater`) among other
 USB-to-serial devices (and store the configuration when 
-re-plugging and/or adding other devices), we provide `um7_autodetect` method
-and the `um7_autodetect.py` script (both are equivalent).
+re-plugging and/or adding other devices), we provide `rsl_autodetect` method
+and the `rsl_autodetect.py` script (both are equivalent).
 
-These methods create `um_[SERIAL_NUM].json` configuration file,
+These methods create `rsl_[SERIAL_NUM].json` configuration file,
 which is then used to match the USB-to-serial converter to which
 the sensor is connected.
 
-### Using `um7_autodetect` method
+### Using `rsl_autodetect` method
 
-1. Launch `um7_autodetect` method:
+1. Launch `rsl_autodetect` method:
 
 ```python
-from um7py import um7_autodetect
-um7_autodetect()
+from rsl_comm_py import rsl_autodetect
+rsl_autodetect()
 ``` 
 
-At this point, the `um7_[SERIAL_NUM].json` files is created 
+At this point, the `rsl_[SERIAL_NUM].json` files is created 
 in the current directory.
 
-### Using `um7_autodetect.py` script
+### Using `rsl_autodetect.py` script
 
-1. Obtain the `um7_autodetect.py` script from `um7py` package:
+1. Obtain the `rsl_autodetect.py` script from `rsl_comm_py` package:
 
 ```python
-from um7py import serve_autodetect_script
+from rsl_comm_py import serve_autodetect_script
 serve_autodetect_script()
 ``` 
 
 2. Launch the script and follow instructions:
 
 ```sh
-./um7_autodetect.py --help
+./rsl_autodetect.py --help
 ```
 
-At this point, the `um7_[SERIAL_NUM].json` files is created 
+At this point, the `rsl_[SERIAL_NUM].json` file is created 
 in the current directory.
 
-**Important:** The created `um7_[SERIAL_NUM].json` configuration file 
+**Important:** The created `rsl_[SERIAL_NUM].json` configuration file 
 should be used as a device file, when creating instance of
 `UM7Communication` class:
 
 ```python
-from um7py import ShearWaterSerial
-shearwater_sensor = ShearWaterSerial(device='um7_[MY_SERIAL_NUM].json')
+from rsl_comm_py import ShearWaterSerial
+shearwater_sensor = ShearWaterSerial(device='rsl_[MY_SERIAL_NUM].json')
 ``` 
 
+## Quick start for `UM7`
 
-## Quick start
+Create `UM7` serial communication object, UM7 connected to a port `/dev/ttyUSB0`,
+and read the firmware version:
+
+```python
+from rsl_comm_py import UM7Serial
+um7_serial = UM7Serial(port_name='/dev/ttyUSB0')
+print(f"um7 firmware revision: {um7_serial.get_fw_revision}")
+```
+
+Reading **all types** of broadcast packets from `UM7`, 1000 packets in total:
+
+```python
+from rsl_comm_py import UM7Serial
+um7_serial = UM7Serial(port_name='/dev/ttyUSB0')
+for packet in um7_serial.recv_broadcast(num_packets=1000):
+    print(f"packet: {packet}")
+```
+
+Reading the **raw sensor data** broadcast packets from `UM7`, not limiting number of packets:
+
+```python
+from rsl_comm_py import UM7Serial
+um7_serial = UM7Serial(port_name='/dev/ttyUSB0')
+for packet in um7_serial.recv_all_raw_broadcast():
+    print(f"packet: {packet}")
+```
+
+Reading 100 **processed sensor data** broadcast packets from `UM7`:
+
+```python
+from rsl_comm_py import UM7Serial
+um7_serial = UM7Serial(port_name='/dev/ttyUSB0')
+for packet in um7_serial.recv_all_proc_broadcast(num_packets=100):
+    print(f"packet: {packet}")
+```
+
+Reading the **Euler angles** broadcast packets from `UM7`:
+
+```python
+from rsl_comm_py import UM7Serial
+um7_serial = UM7Serial(port_name='/dev/ttyUSB0')
+for packet in um7_serial.recv_euler_broadcast():
+    print(f"packet: {packet}")
+```
+
+Reading the `CREG_COM_SETTINGS` configuration register from `UM7`:
+
+```python
+from rsl_comm_py import UM7Serial
+um7_serial = UM7Serial(port_name='/dev/ttyUSB0')
+print(f"received value: {um7_serial.creg_com_settings}")
+```
+
+Writing 40 (changing `ALL_RAW_RATE` to 40 Hz) to the `CREG_COM_RATES2` register:
+
+```python
+from rsl_comm_py import UM7Serial
+um7_serial = UM7Serial(port_name='/dev/ttyUSB0')
+um7_serial.creg_com_rates2 = 40
+```
+
+## Quick start for `shearwater`
 
 Read `shearwater` firmware build id:
 
 ```python
-from um7py import ShearWaterSerial
-shearwater = ShearWaterSerial(device='um7_A500CNHH.json')
+from rsl_comm_py import ShearWaterSerial
+shearwater = ShearWaterSerial(device='rsl_A500CNHH.json')
 print(f"get_fw_build_id : {shearwater.get_fw_build_id}")
 ```
 
+Create `UM7` serial communication object, UM7 connected to a port `/dev/ttyUSB0`,
+and read the firmware version:
+
+```python
+from rsl_comm_py import ShearWaterSerial
+shearwater = ShearWaterSerial(port_name='/dev/ttyUSB0')
+print(f"shearwater firmware revision: {shearwater.get_fw_build_version}")
+```
+
+
+## Slow start
+
+Take a look at the available [examples](./um7py/examples).
+
+In order to use the `python` driver functionality one first needs to 
+create a communication object (e.g. `UM7Serial`, `UM7SpiLinuxPort`,
+or `ShearWaterSerial`, `ShearWaterSpiUsbIss`).
+
+The construction of the UART communication object can be done 
+either by specifying a `port_name` directly (e.g. `/dev/ttyS0`), or
+by specifying the `device` file that stores *USB2Serial* config
+(e.g. `rsl_A500CNP8.json`). The `device` argument shall 
+only be used, when RSL board (`UM7`, `UM8`, `shearwater`) is connected via the 
+[USB Expansion Board](https://redshiftlabs.com.au/product/usb-expansion-board/),
+the `device` stores properties of the expansion board. Why?
+The issue to keep in mind that when the sensor is re-plugged,
+it might appear to the OS as different serial connection,
+i.e. when first plugged in the OS detects the device as
+`/dev/ttyS0`, then after re-plugging exactly the same 
+sensor might appear by different port name, e.g. `/dev/ttyS1`, which 
+means the user code needs to be changed.
+If using the `device`, we store properties of the
+[USB Expansion Board](https://redshiftlabs.com.au/product/usb-expansion-board/)
+in a JSON file (e.g. converter chip ID) 
+and search connection which match with the properties, and 
+in this case connecting to the sensor, even if is shown as a 
+different serial connection by the OS.
+
+So the communication object can either be created with specifying the `port_name`:
+
+```python
+from rsl_comm_py import UM7Serial
+um7_serial = UM7Serial(port_name='/dev/ttyUSB0')
+```
+
+Or with specifying the `device`:
+
+```python
+from rsl_comm_py import UM7Serial
+um7 = UM7Serial(device='um7_A500CNP8.json')
+```
+
+The two options are exclusive, i.e. specifying both `port_name` and `device` will not work.
+
+Accessing to the individual registers is done via python 
+[properties](https://docs.python.org/3/library/functions.html#property).
+Properties for register names are all lower-case, split by `_`.
+
+For example, reading the `CREG_COM_RATES1`:
+
+```python
+from rsl_comm_py import UM7Serial
+um7 = UM7Serial(device='rsl_A500CNP8.json')
+um7.creg_com_rates1
+```
+
+Note, that reading single register is quite a slow operation,
+since one first constructs and sends a packet, and then parses 
+output for response. 
+Reading single registers is not recommended for reading sensor data,
+since it might happen, that data from different sensor registers come from different measurements.
+We strongly advice to use broadcast messages for reading sensor and fusion data.
+
+## UM7 Data Packets
+
+`UM7` sends different types of broadcast messages over the UART.
+These messages are e.g. `HEALTH` packet (i.e. the `DREG_HEALTH` register),
+raw sensor data (raw gyro, accelerometer, and magnetometer, and temperature),
+processed sensor data (processed gyro, accelerometer, and magnetometer),
+Euler angles, quaternions.
+
+These data packets are stored in the repo as 
+[dataclasses](https://docs.python.org/3/library/dataclasses.html)
+in the file [um7_broadcast_packets.py](./rsl_comm_py/um7_broadcast_packets.py).
+Note, that only payload stored in the dataclasses, and all the 
+checks (e.g. checksum, data length) is done during broadcast reception.
+
+For example, the raw data broadcast message has the following payload:
+
+```python
+from dataclasses import dataclass
+
+@dataclass
+class UM7AllRawPacket:
+    gyro_raw_x: int
+    gyro_raw_y: int
+    gyro_raw_z: int
+    gyro_raw_time: float
+    accel_raw_x: int
+    accel_raw_y: int
+    accel_raw_z: int
+    accel_raw_time: float
+    mag_raw_x: int
+    mag_raw_y: int
+    mag_raw_z: int
+    mag_raw_time: float
+    temperature: float
+    temperature_time: float
+```
+
+## `shearwater` Data Packets
+
+
+`shearwater`, similar to `UM7` sends broadcast messages over the UART.
+These are e.g. raw sensor data (raw gyro, accelerometer, and magnetometer, and temperature),
+processed sensor data (processed gyro, accelerometer, and magnetometer),
+Euler angles, quaternions.
+
+These data packets are defined in
+in the file [shearwater_broadcast_packets.py](./rsl_comm_py/shearwater_broadcast_packets.py).
+
+For example, the data broadcast message with the processed sensor data 
+has the following payload:
+
+```python
+from dataclasses import dataclass
+
+
+@dataclass
+class ShearWaterAllProcPacket:
+    gyro_1_proc_x: float
+    gyro_1_proc_y: float
+    gyro_1_proc_z: float
+    gyro_1_proc_time: float
+    gyro_2_proc_x: float
+    gyro_2_proc_y: float
+    gyro_2_proc_z: float
+    gyro_2_proc_time: float
+    accel_1_proc_x: float
+    accel_1_proc_y: float
+    accel_1_proc_z: float
+    accel_1_proc_time: float
+    mag_1_proc_x: float
+    mag_1_proc_y: float
+    mag_1_proc_z: float
+    mag_1_norm: float
+    mag_1_proc_time: float
+    mag_2_proc_x: float
+    mag_2_proc_y: float
+    mag_2_proc_z: float
+    mag_2_norm: float
+    mag_2_proc_time: float
+```
+
+
+## Acknowledgement
+
+We are so grateful for the open source community for creating
+open source UM7 driver versions and sharing it with a world!
+We are inspired by your work, and at the same time 
+want to improve:
+provide UART and SPI communication, in detail documentation 
+and explanations to facilitate the start for new users.
+
+The acknowledgments go to:
+
+* [Daniel Kurek](https://github.com/dank93) and his
+[um7](https://github.com/dank93/um7) repository,
+for implementing the first driver for interfacing with UM7;
+ 
+* [Till Busch](https://github.com/buxit) and his [um7](https://github.com/buxit/um7) 
+fork of Daniel's Kurek repo, for extending on the Daniel's work and
+adding new functionality.
 
 ## Maintainer
 

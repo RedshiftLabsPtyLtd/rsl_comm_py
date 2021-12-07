@@ -1,5 +1,5 @@
-from rsl_comm_py.um7_autodetect import um7_autodetect
-from rsl_comm_py.serve_um7_autodetect import serve_autodetect_script
+from rsl_comm_py.rsl_autodetect import rsl_autodetect
+from rsl_comm_py.serve_rsl_autodetect import serve_autodetect_script
 from rsl_comm_py.shearwater_serial import ShearWaterSerial
 from rsl_comm_py.shearwater_spi import ShearWaterSpiUsbIss, ShearWaterSpiLinuxPort
 from rsl_comm_py.um7_serial import UM7Serial

@@ -6,4 +6,5 @@ dependencies:
   - pip
   - pip:
     - pyquaternion
+    - jinja2
     - usb-iss
