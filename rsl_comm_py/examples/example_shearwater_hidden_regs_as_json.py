@@ -4,9 +4,10 @@
 # Date: 19 August 2020
 
 import logging
-import os.path
 import sys
 import json
+
+from pathlib import Path
 
 from rsl_comm_py.shearwater_serial import ShearWaterSerial
 
@@ -17,11 +18,11 @@ if __name__ == '__main__':
         format='[%(asctime)s.%(msecs)03d] [%(levelname)-8s]:  %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S',
         handlers=[
-            logging.FileHandler(f'{os.path.basename(__file__)}.log'),
+            logging.FileHandler(f'{Path(__file__).stem}.log'),
             logging.StreamHandler(sys.stdout),
         ])
-    script_dir = os.path.dirname(__file__)
-    device_file = os.path.join(script_dir, os.pardir, "um7py", "um7_A500CNHD.json")
+    script_dir = Path(__file__).parent
+    device_file = script_dir.parent / "rsl_A500CNHD.json"
     shearwater = ShearWaterSerial(device=device_file)
     hidden_register_values = []
     _, uid_1 = shearwater.board_unique_id_1
@@ -31,7 +32,9 @@ if __name__ == '__main__':
         hidden_register_values.append(reg.as_dict())
 
     creg_register_str = json.dumps(hidden_register_values, indent=2)
-
-    with open(f'shearwater_hidden_{uid_1:0X}.json', 'w') as fd:
+    json_file_name = f'shearwater_hidden_{uid_1:0X}.json'
+    with open(json_file_name, 'w') as fd:
         fd.write(creg_register_str)
+
+    logging.warning(f'OK: Configuration settings written to file: `{json_file_name}`')
 

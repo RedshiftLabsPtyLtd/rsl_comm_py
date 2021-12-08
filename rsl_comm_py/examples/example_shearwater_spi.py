@@ -4,8 +4,9 @@
 # Date: 31 March 2021
 
 import logging
-import os.path
 import sys
+
+from pathlib import Path
 
 from rsl_comm_py.shearwater_serial import ShearWaterSerial
 from rsl_comm_py.shearwater_spi import ShearWaterSpiUsbIss
@@ -17,11 +18,11 @@ if __name__ == '__main__':
         format='[%(asctime)s.%(msecs)03d] [%(levelname)-8s]:  %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S',
         handlers=[
-            logging.FileHandler(f'{os.path.basename(__file__)}.log'),
+            logging.FileHandler(f'{Path(__file__).stem}.log', mode='w'),
             logging.StreamHandler(sys.stdout),
         ])
-    script_dir = os.path.dirname(__file__)
-    device_file = os.path.join(script_dir, os.pardir, "um7py", "um7_A500CNHD.json")
+    script_dir = Path(__file__).parent
+    device_file = script_dir.parent / "rsl_A500CNHD.json"
 
     shearwater_spi = ShearWaterSpiUsbIss(port='/dev/ttyACM0')
     shearwater_serial = ShearWaterSerial(device=device_file)

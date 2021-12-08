@@ -13,6 +13,7 @@ import struct
 import sys
 
 from time import monotonic
+from serial.tools import list_ports
 from typing import Tuple, List, Dict, Any, Union, Callable
 
 from rsl_comm_py.shearwater_broadcast_packets import ShearWaterAllRawPacket, ShearWaterAllProcPacket, ShearWaterQuaternionPacket
@@ -57,6 +58,23 @@ class ShearWaterSerial(ShearWaterRegisters):
     def connect(self, *args, **kwargs):
         self.init_connection()
 
+    def autodetect(self):
+        device_list = list_ports.comports()
+        for device in device_list:
+            json_config = {}
+            # go through device list and check each FTDI device for a match
+            if device.manufacturer == "FTDI":
+                json_config['ID_VENDOR'] = device.manufacturer
+                json_config['ID_SERIAL_SHORT'] = device.serial_number
+                # don't know what the model should look like so were making it "pid:vid".
+                # This matches the windows section of the autodetect script
+                json_config['ID_MODEL'] = '{0:04x}:{1:04x}'.format(device.vid, device.pid)
+                if self.device_dict == json_config:
+                    self.port_name = device.device  # set serial port ("COM4", for example)
+                    return True
+        else:
+            return False
+
     def find_port(self):
         if not self.device_file:
             raise RslException("No configuration file specified!")
@@ -70,36 +88,7 @@ class ShearWaterSerial(ShearWaterRegisters):
         with open(self.device_file) as fp:
             self.device_dict = json.load(fp)
         # go through each device and match vendor, then key
-        if sys.platform.startswith('win32'):
-            from serial.tools import list_ports
-            device_list = list_ports.comports()
-            for device in device_list:
-                json_config = {}
-                # go through device list and check each FTDI device for a match
-                if device.manufacturer == "FTDI":
-                    json_config['ID_VENDOR'] = device.manufacturer
-                    json_config['ID_SERIAL_SHORT'] = device.serial_number
-                    # don't know what the model should look like so were making it "pid:vid".
-                    # This matches the windows section of the autodetect script
-                    json_config['ID_MODEL'] = '{0:04x}:{1:04x}'.format(device.vid, device.pid)
-                    if self.device_dict == json_config:
-                        self.port_name = device.device   # set serial port ("COM4", for example)
-                        return True
-            else:
-                return False
-        else:
-            import pyudev
-            context = pyudev.Context()
-            for device in context.list_devices(subsystem='tty'):
-                json_config = {}
-                if device.get('ID_VENDOR') == 'FTDI':
-                    for key in self.device_dict:
-                        json_config[key] = device.get(key)
-                    if self.device_dict == json_config:
-                        self.port_name = device.device_node
-                        return True
-            else:
-                return False
+        return self.autodetect()
 
     def get_preamble(self):
         preamble = bytes('snp', encoding='ascii')
