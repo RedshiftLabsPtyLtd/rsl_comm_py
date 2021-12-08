@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Author: Dr. Konstantin Selyunin
-# Date: 2 March 2020
-# Version: v0.1
+# Date: 10 February 2021
+# Version: v0.2
 # License: MIT
 
 import json
@@ -12,6 +12,7 @@ import serial
 import struct
 import sys
 
+from serial.tools import list_ports
 from time import monotonic
 from typing import Tuple, List, Dict, Any, Union, Callable
 
@@ -58,6 +59,23 @@ class UM7Serial(UM7Registers):
     def connect(self, *args, **kwargs):
         self.init_connection()
 
+    def autodetect(self):
+        device_list = list_ports.comports()
+        for device in device_list:
+            json_config = {}
+            # go through device list and check each FTDI device for a match
+            if device.manufacturer == "FTDI":
+                json_config['ID_VENDOR'] = device.manufacturer
+                json_config['ID_SERIAL_SHORT'] = device.serial_number
+                # don't know what the model should look like so were making it "pid:vid".
+                # This matches the windows section of the autodetect script
+                json_config['ID_MODEL'] = '{0:04x}:{1:04x}'.format(device.vid, device.pid)
+                if self.device_dict == json_config:
+                    self.port_name = device.device  # set serial port ("COM4", for example)
+                    return True
+        else:
+            return False
+
     def find_port(self):
         if not self.device_file:
             raise RslException("No configuration file specified!")
@@ -71,36 +89,7 @@ class UM7Serial(UM7Registers):
         with open(self.device_file) as fp:
             self.device_dict = json.load(fp)
         # go through each device and match vendor, then key
-        if sys.platform.startswith('win32'):
-            from serial.tools import list_ports
-            device_list = list_ports.comports()
-            for device in device_list:
-                json_config = {}
-                # go through device list and check each FTDI device for a match
-                if device.manufacturer == "FTDI":
-                    json_config['ID_VENDOR'] = device.manufacturer
-                    json_config['ID_SERIAL_SHORT'] = device.serial_number
-                    # don't know what the model should look like so were making it "pid:vid". 
-                    # This matches the windows section of the autodetect script
-                    json_config['ID_MODEL'] = '{0:04x}:{1:04x}'.format(device.vid, device.pid)
-                    if self.device_dict == json_config:
-                        self.port_name = device.device   # set serial port ("COM4", for example)
-                        return True
-            else:
-                return False
-        else:
-            import pyudev
-            context = pyudev.Context()
-            for device in context.list_devices(subsystem='tty'):
-                json_config = {}
-                if device.get('ID_VENDOR') == 'FTDI':
-                    for key in self.device_dict:
-                        json_config[key] = device.get(key)
-                    if self.device_dict == json_config:
-                        self.port_name = device.device_node
-                        return True
-            else:
-                return False
+        return self.autodetect()
 
     def get_preamble(self):
         preamble = bytes('snp', encoding='ascii')
@@ -279,8 +268,11 @@ class UM7Serial(UM7Registers):
             return ok
 
     def recv_broadcast_packet(self, packet_target_addr: int, expected_packet_length: int,
-                              decode_callback: Callable, num_packets: int = -1):
+                              decode_callback: Callable, num_packets: int = -1, flush_buffer_on_start: bool = False):
         received_packets = 0
+        if flush_buffer_on_start:
+            self.port.reset_input_buffer()
+            self.buffer = bytes()
         while num_packets == -1 or received_packets < num_packets:
             ok, _ = self.recv()
             while len(self.buffer) > 0:
@@ -303,74 +295,77 @@ class UM7Serial(UM7Registers):
                             yield decode_callback(packet)
                             received_packets += 1
 
-    def recv_all_raw_broadcast(self, num_packets: int = -1):
+    def recv_all_raw_broadcast(self, num_packets: int = -1, flush_buffer_on_start: bool = False):
         all_raw_start_addr = self.svd_parser.find_register_by(name='DREG_GYRO_RAW_XY').address
         broadcast_packet_length = 51
         return self.recv_broadcast_packet(all_raw_start_addr, broadcast_packet_length,
-                                          self.decode_all_raw_broadcast, num_packets)
+                                          self.decode_all_raw_broadcast, num_packets, flush_buffer_on_start)
 
-    def recv_all_proc_broadcast(self, num_packets: int = -1):
+    def recv_all_proc_broadcast(self, num_packets: int = -1, flush_buffer_on_start: bool = False):
         all_proc_start_addr = self.svd_parser.find_register_by(name='DREG_GYRO_PROC_X').address
         broadcast_packet_length = 55
         return self.recv_broadcast_packet(all_proc_start_addr, broadcast_packet_length,
-                                          self.decode_all_proc_broadcast, num_packets)
+                                          self.decode_all_proc_broadcast, num_packets, flush_buffer_on_start)
 
-    def recv_euler_broadcast(self, num_packets: int = -1):
+    def recv_euler_broadcast(self, num_packets: int = -1, flush_buffer_on_start: bool = False):
         euler_start_addr = self.svd_parser.find_register_by(name='DREG_EULER_PHI_THETA').address
         broadcast_packet_length = 27
         return self.recv_broadcast_packet(euler_start_addr, broadcast_packet_length,
-                                          self.decode_euler_broadcast, num_packets)
+                                          self.decode_euler_broadcast, num_packets, flush_buffer_on_start)
 
-    def recv_quaternion_broadcast(self, num_packets: int = -1):
+    def recv_quaternion_broadcast(self, num_packets: int = -1, flush_buffer_on_start: bool = False):
         quat_start_addr = self.svd_parser.find_register_by(name='DREG_QUAT_AB').address
         broadcast_packet_length = 19
         return self.recv_broadcast_packet(quat_start_addr, broadcast_packet_length,
-                                          self.decode_quaternion_broadcast, num_packets)
+                                          self.decode_quaternion_broadcast, num_packets, flush_buffer_on_start)
 
-    def recv_health_broadcast(self, num_packets: int = -1):
+    def recv_health_broadcast(self, num_packets: int = -1, flush_buffer_on_start: bool = False):
         health_start_addr = self.svd_parser.find_register_by(name='DREG_HEALTH').address
         broadcast_packet_length = 11
         return self.recv_broadcast_packet(health_start_addr, broadcast_packet_length,
-                                          self.decode_health_broadcast, num_packets)
+                                          self.decode_health_broadcast, num_packets, flush_buffer_on_start)
 
-    def recv_raw_accel_broadcast(self, num_packets: int = -1):
+    def recv_raw_accel_broadcast(self, num_packets: int = -1, flush_buffer_on_start: bool = False):
         raw_accel_1_addr = self.svd_parser.find_register_by(name='DREG_ACCEL_RAW_XY').address
         broadcast_packet_length = 19
         return self.recv_broadcast_packet(raw_accel_1_addr, broadcast_packet_length,
-                                          self.decode_raw_accel_broadcast, num_packets)
+                                          self.decode_raw_accel_broadcast, num_packets, flush_buffer_on_start)
 
-    def recv_raw_gyro_broadcast(self, num_packets: int = -1):
+    def recv_raw_gyro_broadcast(self, num_packets: int = -1, flush_buffer_on_start: bool = False):
         raw_gyro_1_addr = self.svd_parser.find_register_by(name='DREG_GYRO_RAW_XY').address
         broadcast_packet_length = 19
         return self.recv_broadcast_packet(raw_gyro_1_addr, broadcast_packet_length,
-                                          self.decode_raw_gyro_broadcast, num_packets)
+                                          self.decode_raw_gyro_broadcast, num_packets, flush_buffer_on_start)
 
-    def recv_raw_mag_broadcast(self, num_packets: int = -1):
+    def recv_raw_mag_broadcast(self, num_packets: int = -1, flush_buffer_on_start: bool = False):
         raw_mag_1_addr = self.svd_parser.find_register_by(name='DREG_MAG_RAW_XY').address
         broadcast_packet_length = 19
         return self.recv_broadcast_packet(raw_mag_1_addr, broadcast_packet_length,
-                                          self.decode_raw_mag_broadcast, num_packets)
+                                          self.decode_raw_mag_broadcast, num_packets, flush_buffer_on_start)
 
-    def recv_proc_accel_broadcast(self, num_packets: int = -1):
+    def recv_proc_accel_broadcast(self, num_packets: int = -1, flush_buffer_on_start: bool = False):
         proc_accel_1_addr = self.svd_parser.find_register_by(name='DREG_ACCEL_PROC_X').address
         broadcast_packet_length = 23
         return self.recv_broadcast_packet(proc_accel_1_addr, broadcast_packet_length,
                                           self.decode_proc_accel_broadcast, num_packets)
 
-    def recv_proc_gyro_broadcast(self, num_packets: int = -1):
+    def recv_proc_gyro_broadcast(self, num_packets: int = -1, flush_buffer_on_start: bool = False):
         proc_gyro_1_addr = self.svd_parser.find_register_by(name='DREG_GYRO_PROC_X').address
         broadcast_packet_length = 23
         return self.recv_broadcast_packet(proc_gyro_1_addr, broadcast_packet_length,
-                                          self.decode_proc_gyro_broadcast, num_packets)
+                                          self.decode_proc_gyro_broadcast, num_packets, flush_buffer_on_start)
 
-    def recv_proc_mag_broadcast(self, num_packets: int = -1):
+    def recv_proc_mag_broadcast(self, num_packets: int = -1, flush_buffer_on_start: bool = False):
         proc_mag_1_addr = self.svd_parser.find_register_by(name='DREG_MAG_PROC_X').address
         broadcast_packet_length = 23
         return self.recv_broadcast_packet(proc_mag_1_addr, broadcast_packet_length,
-                                          self.decode_proc_mag_broadcast, num_packets)
+                                          self.decode_proc_mag_broadcast, num_packets, flush_buffer_on_start)
 
-    def recv_broadcast(self,  num_packets: int = -1):
+    def recv_broadcast(self,  num_packets: int = -1, flush_buffer_on_start: bool = False):
         received_packets = 0
+        if flush_buffer_on_start:
+            self.port.reset_input_buffer()
+            self.buffer = bytes()
         while num_packets == -1 or received_packets < num_packets:
             ok, _ = self.recv()
             while len(self.buffer) > 0:
@@ -570,6 +565,7 @@ class UM7Serial(UM7Registers):
             reg, *_ = getattr(self, name)
             config_regs_as_json.append(reg.as_dict())
         return config_regs_as_json
+
 
 if __name__ == '__main__':
     pass

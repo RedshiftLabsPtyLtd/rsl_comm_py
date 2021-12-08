@@ -3,6 +3,8 @@
 # License: MIT
 # Date: 28 March 2021
 # NOTE: this only works with python3.8+ !
+# Modified: 08 December 2021
+
 import json
 import logging
 from pathlib import Path
@@ -23,9 +25,9 @@ proc_lock = Lock()
 
 def sensor_read_process(raw_shm: shared_memory.SharedMemory, proc_shm: shared_memory.SharedMemory, r_lock: Lock, p_lock: Lock):
     script_dir = Path(__file__).parent
-    device_file = script_dir.parent.joinpath("um7_A500CNP8.json")
+    device_file = script_dir.parent.joinpath("rsl_A500CNP8.json")
     assert device_file.exists(), f"Device file with connection info: {device_file} does not exist!"
-    um7 = UM7Serial(device=str(device_file))
+    um7 = UM7Serial(device=device_file)
 
     for packet in um7.recv_broadcast(flush_buffer_on_start=False):
         packet_bytes = bytes(json.dumps(packet.__dict__), encoding='utf-8')
@@ -58,7 +60,7 @@ def main_function():
             raw_meas_str = str(raw_meas_bytes, encoding='utf-8')
             raw_meas_dict = json.loads(raw_meas_str)
             packet = UM7AllRawPacket(**raw_meas_dict)
-            logging.warning(f"[MF][RAW]: {packet}")
+            logging.warning(f"[MF][RAW ]: {packet}")
             sleep(3.0)  # move motors, do some hard work
         else:
             # here I need ot handle proc data
