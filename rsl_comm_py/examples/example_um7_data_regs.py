@@ -7,7 +7,7 @@ import logging
 import os.path
 import sys
 
-from um7py.um7_serial import UM7Serial
+from rsl_comm_py.um7_serial import UM7Serial
 
 
 if __name__ == '__main__':
@@ -20,7 +20,7 @@ if __name__ == '__main__':
             logging.StreamHandler(sys.stdout),
         ])
     script_dir = os.path.dirname(__file__)
-    device_file = os.path.join(script_dir, os.pardir, "um7py", "um7_A500CNP8.json")
+    device_file = os.path.join(script_dir, os.pardir, "um7_A500CNP8.json")
     um7 = UM7Serial(device=device_file)
 
     print(f"\\n========== DATA REGISTERS ===================================")

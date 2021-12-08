@@ -8,8 +8,8 @@ import logging
 from pathlib import Path
 import sys
 
-from um7py.um7_serial import UM7Serial
-from um7py.um7_broadcast_packets import UM7AllProcPacket, UM7AllRawPacket
+from rsl_comm_py.um7_serial import UM7Serial
+from rsl_comm_py.um7_broadcast_packets import UM7AllProcPacket, UM7AllRawPacket
 from multiprocessing import shared_memory, Process, Lock
 from time import sleep, time
 

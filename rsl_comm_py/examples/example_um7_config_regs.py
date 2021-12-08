@@ -7,7 +7,7 @@ import logging
 import os.path
 import sys
 
-from um7py.um7_serial import UM7Serial
+from rsl_comm_py.um7_serial import UM7Serial
 
 
 if __name__ == '__main__':
@@ -20,7 +20,7 @@ if __name__ == '__main__':
             logging.StreamHandler(sys.stdout),
         ])
     script_dir = os.path.dirname(__file__)
-    device_file = os.path.join(script_dir, os.pardir, "um7py", "um7_A500CNP8.json")
+    device_file = os.path.join(script_dir, os.pardir, "um7_A500CNP8.json")
     um7 = UM7Serial(device=device_file)
     print(f"\\n========== CONFIG REGISTERS ===================================")
     print(f"creg_com_settings             : {um7.creg_com_settings}")
@@ -39,7 +39,7 @@ if __name__ == '__main__':
     print(f"creg_gyro_trim_y              : {um7.creg_gyro_trim_y}")
     print(f"creg_gyro_trim_z              : {um7.creg_gyro_trim_z}")
     print(f"creg_mag_cal1_1               : {um7.creg_mag_cal1_1}")
-    print(f"creg_mag_cal1_2               : {um7.creg_mag_cal1_2}")
+    print(f"creg_mag_1_cal1_2             : {um7.creg_mag_cal1_2}")
     print(f"creg_mag_cal1_3               : {um7.creg_mag_cal1_3}")
     print(f"creg_mag_cal2_1               : {um7.creg_mag_cal2_1}")
     print(f"creg_mag_cal2_2               : {um7.creg_mag_cal2_2}")
@@ -48,7 +48,7 @@ if __name__ == '__main__':
     print(f"creg_mag_cal3_2               : {um7.creg_mag_cal3_2}")
     print(f"creg_mag_cal3_3               : {um7.creg_mag_cal3_3}")
     print(f"creg_mag_bias_x               : {um7.creg_mag_bias_x}")
-    print(f"creg_mag_bias_y               : {um7.creg_mag_bias_y}")
+    print(f"creg_mag_1_bias_y             : {um7.creg_mag_bias_y}")
     print(f"creg_mag_bias_z               : {um7.creg_mag_bias_z}")
     print(f"creg_accel_cal1_1             : {um7.creg_accel_cal1_1}")
     print(f"creg_accel_cal1_2             : {um7.creg_accel_cal1_2}")

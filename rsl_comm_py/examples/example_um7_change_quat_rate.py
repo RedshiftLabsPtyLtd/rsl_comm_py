@@ -8,7 +8,7 @@ import logging
 import os.path
 import sys
 
-from um7py.um7_serial import UM7Serial
+from rsl_comm_py.um7_serial import UM7Serial
 
 
 if __name__ == '__main__':
