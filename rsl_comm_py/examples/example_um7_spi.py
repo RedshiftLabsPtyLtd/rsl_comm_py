@@ -29,84 +29,54 @@ if __name__ == '__main__':
 
     print(f"\n========== DATA REGISTERS ===================================")
     for _ in range(2):
-        reg_read_spi = um7_spi.dreg_mag_raw_xy
-        reg_read_uart = um7_spi.dreg_mag_raw_xy
-        print(f"dreg_mag_raw_xy_spi             : x={reg_read_spi[1]:+04}, y={reg_read_spi[2]:+04}, raw={reg_read_spi[0].raw_value}")
-        print(f"dreg_mag_raw_xy_serial          : {um7_serial.dreg_mag_raw_xy[0].raw_value}")
-        print(f"dreg_mag_raw_z_spi              : {um7_spi.dreg_mag_raw_z[0].raw_value}")
-        print(f"dreg_mag_raw_z_serial           : {um7_serial.dreg_mag_raw_z[0].raw_value}")
-        print(f"dreg_mag_raw_time_spi           : {um7_spi.dreg_mag_raw_time[0].raw_value}")
-        print(f"dreg_mag_raw_time_spi           : {um7_serial.dreg_mag_raw_time[0].raw_value}")
-        # print(f"dreg_mag_1_raw_time_spi         : {um7_spi.dreg_mag_1_raw_time[0].raw_value}")
-        # print(f"dreg_mag_1_raw_time_serial      : {um7_serial.dreg_mag_1_raw_time[0].raw_value}")
-        # print(f"dreg_mag_2_raw_xy_spi           : {um7_spi.dreg_mag_2_raw_xy[0].raw_value}")
-        # print(f"dreg_mag_2_raw_xy_serial        : {um7_serial.dreg_mag_2_raw_xy[0].raw_value}")
-        # print(f"dreg_mag_2_raw_z_spi            : {um7_spi.dreg_mag_2_raw_z[0].raw_value}")
-        # print(f"dreg_mag_2_raw_z_serial         : {um7_serial.dreg_mag_2_raw_z[0].raw_value}")
-        # print(f"dreg_mag_2_raw_time_spi         : {um7_spi.dreg_mag_2_raw_time[0].raw_value}")
-        # print(f"dreg_mag_2_raw_time_serial      : {um7_serial.dreg_mag_2_raw_time[0].raw_value}")
-        # print(f"dreg_temperature_spi            : {um7_spi.dreg_temperature[0].raw_value}")
-        # print(f"dreg_temperature_serial         : {um7_serial.dreg_temperature[0].raw_value}")
-        # print(f"dreg_temperature_time_spi       : {um7_spi.dreg_temperature_time[0].raw_value}")
-        # print(f"dreg_temperature_time_serial    : {um7_serial.dreg_temperature_time[0].raw_value}")
-        # print(f"dreg_gyro_1_proc_x_spi          : {um7_spi.dreg_gyro_1_proc_x[0].raw_value}")
-        # print(f"dreg_gyro_1_proc_x_serial       : {um7_serial.dreg_gyro_1_proc_x[0].raw_value}")
-        # print(f"dreg_gyro_1_proc_y_spi          : {um7_spi.dreg_gyro_1_proc_y[0].raw_value}")
-        # print(f"dreg_gyro_1_proc_y_serial       : {um7_serial.dreg_gyro_1_proc_y[0].raw_value}")
-        # print(f"dreg_gyro_1_proc_z_spi          : {um7_spi.dreg_gyro_1_proc_z[0].raw_value}")
-        # print(f"dreg_gyro_1_proc_z_serial       : {um7_serial.dreg_gyro_1_proc_z[0].raw_value}")
-        # print(f"dreg_gyro_1_proc_time_spi       : {um7_spi.dreg_gyro_1_proc_time[0].raw_value}")
-        # print(f"dreg_gyro_1_proc_time_serial    : {um7_serial.dreg_gyro_1_proc_time[0].raw_value}")
-        # print(f"dreg_gyro_2_proc_x_spi          : {um7_spi.dreg_gyro_2_proc_x[0].raw_value}")
-        # print(f"dreg_gyro_2_proc_x_serial       : {um7_serial.dreg_gyro_2_proc_x[0].raw_value}")
-        # print(f"dreg_gyro_2_proc_y_spi          : {um7_spi.dreg_gyro_2_proc_y[0].raw_value}")
-        # print(f"dreg_gyro_2_proc_y_serial       : {um7_serial.dreg_gyro_2_proc_y[0].raw_value}")
-        # print(f"dreg_gyro_2_proc_z_spi          : {um7_spi.dreg_gyro_2_proc_z[0].raw_value}")
-        # print(f"dreg_gyro_2_proc_z_serial       : {um7_serial.dreg_gyro_2_proc_z[0].raw_value}")
-        # print(f"dreg_gyro_2_proc_time_spi       : {um7_spi.dreg_gyro_2_proc_time[0].raw_value}")
-        # print(f"dreg_gyro_2_proc_time_serial    : {um7_serial.dreg_gyro_2_proc_time[0].raw_value}")
-        # print(f"dreg_accel_1_proc_x_spi         : {um7_spi.dreg_accel_1_proc_x[0].raw_value}")
-        # print(f"dreg_accel_1_proc_x_serial      : {um7_serial.dreg_accel_1_proc_x[0].raw_value}")
-        # print(f"dreg_accel_1_proc_y_spi         : {um7_spi.dreg_accel_1_proc_y[0].raw_value}")
-        # print(f"dreg_accel_1_proc_y_serial      : {um7_serial.dreg_accel_1_proc_y[0].raw_value}")
-        # print(f"dreg_accel_1_proc_z_spi         : {um7_spi.dreg_accel_1_proc_z[0].raw_value}")
-        # print(f"dreg_accel_1_proc_z_serial      : {um7_serial.dreg_accel_1_proc_z[0].raw_value}")
-        # print(f"dreg_accel_1_proc_time_spi      : {um7_spi.dreg_accel_1_proc_time[0].raw_value}")
-        # print(f"dreg_accel_1_proc_time_serial   : {um7_serial.dreg_accel_1_proc_time[0].raw_value}")
-        # print(f"dreg_mag_1_proc_x_spi           : {um7_spi.dreg_mag_1_proc_x[0].raw_value}")
-        # print(f"dreg_mag_1_proc_x_serial        : {um7_serial.dreg_mag_1_proc_x[0].raw_value}")
-        # print(f"dreg_mag_1_proc_y_spi           : {um7_spi.dreg_mag_1_proc_y[0].raw_value}")
-        # print(f"dreg_mag_1_proc_y_serial        : {um7_serial.dreg_mag_1_proc_y[0].raw_value}")
-        # print(f"dreg_mag_1_proc_z_spi           : {um7_spi.dreg_mag_1_proc_z[0].raw_value}")
-        # print(f"dreg_mag_1_proc_z_serial        : {um7_serial.dreg_mag_1_proc_z[0].raw_value}")
-        # print(f"dreg_mag_1_norm_spi             : {um7_spi.dreg_mag_1_norm[0].raw_value}")
-        # print(f"dreg_mag_1_norm_serial          : {um7_serial.dreg_mag_1_norm[0].raw_value}")
-        # print(f"dreg_mag_1_proc_time_spi        : {um7_spi.dreg_mag_1_proc_time[0].raw_value}")
-        # print(f"dreg_mag_1_proc_time_serial     : {um7_serial.dreg_mag_1_proc_time[0].raw_value}")
-        # print(f"dreg_mag_2_proc_x_spi           : {um7_spi.dreg_mag_2_proc_x[0].raw_value}")
-        # print(f"dreg_mag_2_proc_x_serial        : {um7_serial.dreg_mag_2_proc_x[0].raw_value}")
-        # print(f"dreg_mag_2_proc_y_spi           : {um7_spi.dreg_mag_2_proc_y[0].raw_value}")
-        # print(f"dreg_mag_2_proc_y_serial        : {um7_serial.dreg_mag_2_proc_y[0].raw_value}")
-        # print(f"dreg_mag_2_proc_z_spi           : {um7_spi.dreg_mag_2_proc_z[0].raw_value}")
-        # print(f"dreg_mag_2_proc_z_serial        : {um7_serial.dreg_mag_2_proc_z[0].raw_value}")
-        # print(f"dreg_mag_2_norm_spi             : {um7_spi.dreg_mag_2_norm[0].raw_value}")
-        # print(f"dreg_mag_2_norm_serial          : {um7_serial.dreg_mag_2_norm[0].raw_value}")
-        # print(f"dreg_mag_2_proc_time_spi        : {um7_spi.dreg_mag_2_proc_time[0].raw_value}")
-        # print(f"dreg_mag_2_proc_time_serial     : {um7_serial.dreg_mag_2_proc_time[0].raw_value}")
-        # print(f"dreg_quat_ab_spi                : {um7_spi.dreg_quat_ab[0].raw_value}")
-        # print(f"dreg_quat_ab_serial             : {um7_serial.dreg_quat_ab[0].raw_value}")
-        # print(f"dreg_quat_cd_spi                : {um7_spi.dreg_quat_cd[0].raw_value}")
-        # print(f"dreg_quat_cd_serial             : {um7_serial.dreg_quat_cd[0].raw_value}")
-        # print(f"dreg_quat_time_spi              : {um7_spi.dreg_quat_time[0].raw_value}")
-        # print(f"dreg_quat_time_serial           : {um7_serial.dreg_quat_time[0].raw_value}")
-        # print(f"dreg_euler_phi_theta_spi        : {um7_spi.dreg_euler_phi_theta[0].raw_value}")
-        # print(f"dreg_euler_phi_theta_serial     : {um7_serial.dreg_euler_phi_theta[0].raw_value}")
-        # print(f"dreg_euler_psi_spi              : {um7_spi.dreg_euler_psi[0].raw_value}")
-        # print(f"dreg_euler_psi_serial           : {um7_serial.dreg_euler_psi[0].raw_value}")
-        # print(f"dreg_euler_phi_theta_dot_spi    : {um7_spi.dreg_euler_phi_theta_dot[0].raw_value}")
-        # print(f"dreg_euler_phi_theta_dot_serial : {um7_serial.dreg_euler_phi_theta_dot[0].raw_value}")
-        # print(f"dreg_euler_psi_dot_spi          : {um7_spi.dreg_euler_psi_dot[0].raw_value}")
-        # print(f"dreg_euler_psi_dot_serial       : {um7_serial.dreg_euler_psi_dot[0].raw_value}")
-        # print(f"dreg_euler_time_spi             : {um7_spi.dreg_euler_time[0].raw_value}")
-        # print(f"dreg_euler_time_serial          : {um7_serial.dreg_euler_time[0].raw_value}")
+        """ Gyro Data """
+        reg_read_spi = um7_spi.dreg_gyro_raw_xy
+        reg_read_uart = um7_serial.dreg_gyro_raw_xy
+        print(f"dreg_gyro_raw_xy_spi            : x={reg_read_spi[1]:+04}, y={reg_read_spi[2]:+04}, raw=0x{reg_read_spi[0].raw_value:08X} | {reg_read_spi[0].raw_value:08}")
+        print(f"dreg_gyro_raw_xy_serial         : x={reg_read_uart[1]:+04}, y={reg_read_uart[2]:+04}, raw=0x{reg_read_uart[0].raw_value:08X} | {reg_read_uart[0].raw_value:08}")
+        reg_read_spi = um7_spi.dreg_gyro_raw_z
+        reg_read_uart = um7_serial.dreg_gyro_raw_z
+        print(f"dreg_gyro_raw_z_spi             : z={reg_read_spi[1]:+04}, raw=0x{reg_read_spi[0].raw_value:08X} | {reg_read_spi[0].raw_value:08}")
+        print(f"dreg_gyro_raw_z_serial          : z={reg_read_uart[1]:+04}, raw=0x{reg_read_uart[0].raw_value:08X} | {reg_read_uart[0].raw_value:08}")
+        reg_read_spi = um7_spi.dreg_gyro_raw_time
+        reg_read_uart = um7_serial.dreg_gyro_raw_time
+        print(f"dreg_gyro_raw_time_spi          : Gt={reg_read_spi[1]:+04.6f}")
+        print(f"dreg_gyro_raw_time_serial       : Gt={reg_read_uart[1]:+04.6f}")
 
+        """ Accelerometer Data """
+        reg_read_spi = um7_spi.dreg_accel_raw_xy
+        reg_read_uart = um7_serial.dreg_accel_raw_xy
+        print(f"dreg_accel_raw_xy_spi           : x={reg_read_spi[1]:+04}, y={reg_read_spi[2]:+04}, raw=0x{reg_read_spi[0].raw_value:08X} | {reg_read_spi[0].raw_value:08}")
+        print(f"dreg_accel_raw_xy_serial        : x={reg_read_uart[1]:+04}, y={reg_read_uart[2]:+04}, raw=0x{reg_read_uart[0].raw_value:08X} | {reg_read_uart[0].raw_value:08}")
+        reg_read_spi = um7_spi.dreg_accel_raw_z
+        reg_read_uart = um7_serial.dreg_accel_raw_z
+        print(f"dreg_accel_raw_z_spi            : z={reg_read_spi[1]:+04}, raw=0x{reg_read_spi[0].raw_value:08X} | {reg_read_spi[0].raw_value:08}")
+        print(f"dreg_accel_raw_z_serial         : z={reg_read_uart[1]:+04}, raw=0x{reg_read_uart[0].raw_value:08X} | {reg_read_uart[0].raw_value:08}")
+        reg_read_spi = um7_spi.dreg_accel_raw_time
+        reg_read_uart = um7_serial.dreg_accel_raw_time
+        print(f"dreg_accel_raw_time_spi         : t={reg_read_spi[1]:+04.6f}")
+        print(f"dreg_accel_raw_time_serial      : t={reg_read_uart[1]:+04.6f}")
+
+        """ Magnetometer Data """
+        reg_read_spi = um7_spi.dreg_mag_raw_xy
+        reg_read_uart = um7_serial.dreg_mag_raw_xy
+        print(f"dreg_mag_raw_xy_spi             : x={reg_read_spi[1]:+04}, y={reg_read_spi[2]:+04}, raw=0x{reg_read_spi[0].raw_value:08X} | {reg_read_spi[0].raw_value:08}")
+        print(f"dreg_mag_raw_xy_serial          : x={reg_read_uart[1]:+04}, y={reg_read_uart[2]:+04}, raw=0x{reg_read_uart[0].raw_value:08X} | {reg_read_uart[0].raw_value:08}")
+        reg_read_spi = um7_spi.dreg_mag_raw_z
+        reg_read_uart = um7_serial.dreg_mag_raw_z
+        print(f"dreg_mag_raw_z_spi              : z={reg_read_spi[1]:+04}, raw=0x{reg_read_spi[0].raw_value:08X} | {reg_read_spi[0].raw_value:08}")
+        print(f"dreg_mag_raw_z_serial           : z={reg_read_uart[1]:+04}, raw=0x{reg_read_uart[0].raw_value:08X} | {reg_read_uart[0].raw_value:08}")
+        reg_read_spi = um7_spi.dreg_mag_raw_time
+        reg_read_uart = um7_serial.dreg_mag_raw_time
+        print(f"dreg_mag_raw_time_spi           : t={reg_read_spi[1]:+04.6f}")
+        print(f"dreg_mag_raw_time_serial        : t={reg_read_uart[1]:+04.6f}")
+
+        """ Temperature """
+        reg_read_spi = um7_spi.dreg_temperature
+        reg_read_uart = um7_serial.dreg_temperature
+        print(f"dreg_temperature_spi            : T={reg_read_spi[1]:+04}, raw={reg_read_spi[0].raw_value}")
+        print(f"dreg_temperature_serial         : T={reg_read_uart[1]:+04}, raw={reg_read_uart[0].raw_value}")
+        reg_read_spi = um7_spi.dreg_temperature_time
+        reg_read_uart = um7_serial.dreg_temperature_time
+        print(f"dreg_temperature_time_spi       : Tt={reg_read_spi[1]:+04.6f}, raw={reg_read_spi[0].raw_value}")
+        print(f"dreg_temperature_time_serial    : Tt={reg_read_uart[1]:+04.6f}, raw={reg_read_uart[0].raw_value}")
