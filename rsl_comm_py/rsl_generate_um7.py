@@ -1,20 +1,20 @@
 # Author: Dr. Konstantin Selyunin
 # Created: 7 April 2020
-# Modified: 12 June 2020
+# Modified: 28 March 2022
 # Version: v0.5
 # License: MIT
 
 import os
-import os.path
 
+from pathlib import Path
 from rsl_comm_py.rsl_generator import RslGenerator
 from textwrap import indent
 from datetime import datetime
 
 
 if __name__ == '__main__':
-    script_folder = os.path.dirname(__file__)
-    svd_file = os.path.join(script_folder, os.pardir, 'rsl_xml_svd/um7.svd')
+    script_folder = Path(__file__).parent
+    svd_file = script_folder / 'rsl_xml_svd' / 'um7.svd'
     rsl_svd_generator = RslGenerator(svd_file=svd_file)
     um7_main_registers = indent(rsl_svd_generator.generate_props_for_main_register_map(), ' ' * 4)
     um7_hidden_registers = indent(rsl_svd_generator.generate_props_for_hidden_registers(), ' ' * 4)
@@ -25,13 +25,14 @@ if __name__ == '__main__':
         'generated_code_for_hidden_register_map': um7_hidden_registers,
         'today': today
     }
-    um7_template = os.path.join(script_folder, os.pardir, 'um7py/templates/um7_template.jinja2')
+    um7_template = script_folder / 'templates'/ 'um7_template.jinja2'
     gen_code = RslGenerator.render_template_to_str(um7_template, params_dict)
     with open('um7_registers.py', 'w') as fd:
         fd.write(gen_code)
 
-    reg_addr_enum_template = os.path.join(script_folder, os.pardir, 'um7py/templates/python_reg_access.jinja2')
-    param_dict = {'version': 'v0.1',
+    reg_addr_enum_template = script_folder / 'templates'/'python_reg_access.jinja2'
+
+    param_dict = {'version': 'v0.2',
                   'date': today,
                   'cregs': rsl_svd_generator.cregs,
                   'dregs': rsl_svd_generator.dregs,

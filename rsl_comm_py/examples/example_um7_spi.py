@@ -80,3 +80,15 @@ if __name__ == '__main__':
         reg_read_uart = um7_serial.dreg_temperature_time
         print(f"dreg_temperature_time_spi       : Tt={reg_read_spi[1]:+04.6f}, raw={reg_read_spi[0].raw_value}")
         print(f"dreg_temperature_time_serial    : Tt={reg_read_uart[1]:+04.6f}, raw={reg_read_uart[0].raw_value}")
+
+        """ Product ID """
+        reg_read_spi = um7_spi.get_fw_revision
+        reg_read_uart = um7_serial.get_fw_revision
+        print(f"firmware_revision_spi           : {reg_read_spi}")
+        print(f"firmware_revision_serial        : {reg_read_uart}")
+
+        """ Firmware Build ID """
+        reg_read_spi = um7_spi.build_id
+        reg_read_uart = um7_serial.build_id
+        print(f"build_id_spi                    : v{reg_read_spi[1]}.{reg_read_spi[2]}.{reg_read_spi[3]}, raw={reg_read_spi[0]}")
+        print(f"build_id_serial                 : v{reg_read_uart[1]}.{reg_read_uart[2]}.{reg_read_uart[3]}, raw={reg_read_uart[0]}")

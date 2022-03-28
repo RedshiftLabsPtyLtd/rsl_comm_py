@@ -2,7 +2,7 @@
 
 # Author: Dr. Konstantin Selyunin
 # License: MIT
-# Created: 2020.12.23
+# Created: 2022.03.28
 
 import logging
 import os.path
@@ -1983,6 +1983,24 @@ class UM7Registers(ABC):
     def reset_ekf(self, new_value):
         addr = 0xB3
         self.write_register(addr, new_value)
+
+    @property
+    def build_id(self):
+        """
+        Build ID shows BUILD version of programmed firmware
+        Payload structure:
+        [31:24] : VERSION_MAJOR -- MAJOR VERSION of the programmed firmware
+        [23:16] : VERSION_MINOR -- MINOR VERSION of the programmed firmware
+        [15:0]  : BUILD_ID -- CI BUILD ID of the programmed firmware
+        :return:  VERSION_MAJOR as uint8_t; VERSION_MINOR as uint8_t; BUILD_ID as uint16_t; 
+        """
+        addr = 0xB5
+        ok, payload = self.read_register(addr)
+        if ok:
+            reg = self.svd_parser.find_register_by(name='BUILD_ID')
+            reg.raw_value, = struct.unpack('>I', payload[0:4])
+            version_major, version_minor, build_id = struct.unpack('>BBH', payload[0:4])
+            return reg, version_major, version_minor, build_id
 
 
     @property
