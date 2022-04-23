@@ -25,15 +25,19 @@ if __name__ == '__main__':
     device_file = script_dir.parent / "rsl_A500CNP8.json"
     um7 = UM7Serial(device=device_file)
     hidden_register_values = []
+    um7.hidden_accel_variance = 55.77  # comment out later to check if flashing succeeded
+    um7.hidden_gyro_variance = 23.23  # comment out later to check if flashing succeeded
+    um7.flash_commit = 1  # comment out later to check if flashing succeeded
+
     for reg in um7.svd_parser.hidden_regs:
         name = reg.name.lower()
         reg, *_ = getattr(um7, name)
         hidden_register_values.append(reg.as_dict())
 
-    creg_register_str = json.dumps(hidden_register_values, indent=2)
+    hidden_register_str = json.dumps(hidden_register_values, indent=2)
     json_file_name = f'um7_hidden.json'
     with open(json_file_name, 'w') as fd:
-        fd.write(creg_register_str)
+        fd.write(hidden_register_str)
 
-    logging.warning(f'OK: Configuration settings written to file: `{json_file_name}`')
+    logging.warning(f'OK: Hidden registers content written to file: `{json_file_name}`')
 

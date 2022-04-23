@@ -42,6 +42,9 @@ class UM8Serial(UM8Registers):
                 raise RslException("Device specified in the config is not connected!")
         self.init_connection()
 
+    def connect(self, *args, **kwargs):
+        self.init_connection()
+
     def init_connection(self):
         self.port = serial.Serial(port=self.port_name)
         self.port.port = self.port_name
@@ -49,10 +52,43 @@ class UM8Serial(UM8Registers):
         if not self.port.is_open:
             self.port.open()
 
-    def connect(self, *args, **kwargs):
-        self.init_connection()
+    def autodetect_windows(self):
+        from serial.tools import list_ports
+        device_list = list_ports.comports()
+        for device in device_list:
+            json_config = {}
+            # go through device list and check each FTDI device for a match
+            if device.manufacturer == "FTDI":
+                json_config['ID_VENDOR'] = device.manufacturer
+                json_config['ID_SERIAL_SHORT'] = device.serial_number
+                # don't know what the model should look like so were making it "pid:vid".
+                # This matches the windows section of the autodetect script
+                json_config['ID_MODEL'] = '{0:04x}:{1:04x}'.format(device.vid, device.pid)
+                if self.device_dict == json_config:
+                    self.port_name = device.device  # set serial port ("COM4", for example)
+                    return True
+        else:
+            return False
 
-    def find_port(self):
+    def autodetect_linux(self):
+        import pyudev
+        context = pyudev.Context()
+        for device in context.list_devices(subsystem='tty'):
+            json_config = {}
+            if device.get('ID_VENDOR') == 'FTDI':
+                for key in self.device_dict:
+                    json_config[key] = device.get(key)
+                if self.device_dict == json_config:
+                    self.port_name = device.device_node
+                    return True
+        else:
+            return False
+
+    def autodetect_mac(self):
+        # windows implementation is actually platform-independent
+        self.autodetect_windows()
+
+    def read_device_file(self):
         if not self.device_file:
             raise RslException("No configuration file specified!")
         if not os.path.isfile(self.device_file):
@@ -64,37 +100,15 @@ class UM8Serial(UM8Registers):
                 self.device_file = guessing_file_path
         with open(self.device_file) as fp:
             self.device_dict = json.load(fp)
-        # go through each device and match vendor, then key
+
+    def find_port(self):
+        self.read_device_file()
         if sys.platform.startswith('win32'):
-            from serial.tools import list_ports
-            device_list = list_ports.comports()
-            for device in device_list:
-                json_config = {}
-                # go through device list and check each FTDI device for a match
-                if device.manufacturer == "FTDI":
-                    json_config['ID_VENDOR'] = device.manufacturer
-                    json_config['ID_SERIAL_SHORT'] = device.serial_number
-                    # don't know what the model should look like so were making it "pid:vid". 
-                    # This matches the windows section of the autodetect script
-                    json_config['ID_MODEL'] = '{0:04x}:{1:04x}'.format(device.vid, device.pid)
-                    if self.device_dict == json_config:
-                        self.port_name = device.device   # set serial port ("COM4", for example)
-                        return True
-            else:
-                return False
+            self.autodetect_windows()
+        elif sys.platform.startswith('linux'):
+            self.autodetect_linux()
         else:
-            import pyudev
-            context = pyudev.Context()
-            for device in context.list_devices(subsystem='tty'):
-                json_config = {}
-                if device.get('ID_VENDOR') == 'FTDI':
-                    for key in self.device_dict:
-                        json_config[key] = device.get(key)
-                    if self.device_dict == json_config:
-                        self.port_name = device.device_node
-                        return True
-            else:
-                return False
+            self.autodetect_mac()
 
     def get_preamble(self):
         preamble = bytes('snp', encoding='ascii')

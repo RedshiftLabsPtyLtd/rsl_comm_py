@@ -4,9 +4,6 @@
 # Version: v0.1
 # License: MIT
 
-import os
-import os.path
-
 from datetime import datetime
 from pathlib import Path
 from textwrap import indent
