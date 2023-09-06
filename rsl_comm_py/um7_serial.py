@@ -18,7 +18,7 @@ from typing import Tuple, List, Dict, Any, Union, Callable
 
 from rsl_comm_py.um7_broadcast_packets import UM7AllRawPacket, UM7HealthPacket, UM7GyroBiasPacket, UM7ProcMagPacket, \
     UM7ProcGyroPacket, UM7ProcAccelPacket, UM7RawMagPacket, UM7RawGyroPacket, UM7RawAccelPacket, UM7QuaternionPacket, \
-    UM7EulerPacket, UM7AllProcPacket
+    UM7EulerPacket, UM7AllProcPacket, UM7GPSPacket, UM7VelocityPacket
 from rsl_comm_py.um7_registers import UM7Registers
 
 
@@ -389,6 +389,8 @@ class UM7Serial(UM7Registers):
                     mag_raw_start_addr = self.svd_parser.find_register_by(name='DREG_MAG_RAW_XY').address
                     gyro_bias_start_addr = self.svd_parser.find_register_by(name='DREG_GYRO_BIAS_X').address
                     quat_addr = self.svd_parser.find_register_by(name='DREG_QUAT_AB').address
+                    gps_addr = self.svd_parser.find_register_by(name='DREG_GPS_LATITUDE').address
+                    velocity_addr = self.svd_parser.find_register_by(name='DREG_VELOCITY_NORTH').address
 
                     if packet_addr == health_start_addr:
                         if len(packet) == 11:
@@ -398,7 +400,7 @@ class UM7Serial(UM7Registers):
                         else:
                             logging.error(f"[HEALTH]: invalid packet length, got {len(packet)}, packet: {packet}!")
                     elif packet_addr == euler_start_addr:
-                        if len(packet) == 27:
+                        if len(packet) == 43:
                             logging.info("[EULER]: broadcast packet found!")
                             yield self.decode_euler_broadcast(packet)
                             received_packets += 1
@@ -468,6 +470,20 @@ class UM7Serial(UM7Registers):
                             received_packets += 1
                         else:
                             logging.error(f"[GYRO_1_BIAS]: invalid packet length, got {len(packet)}, packet: {packet}!")
+                    elif packet_addr == gps_addr:
+                        if len(packet) == 31:
+                            logging.info("[GPS]: broadcast packet found!")
+                            yield self.decode_gps_broadcast(packet)
+                            received_packets += 1
+                        else:
+                            logging.error(f"[GPS]: invalid packet length, got {len(packet)}, packet: {packet}!")
+                    elif packet_addr == velocity_addr:
+                        if len(packet) == 23:
+                            logging.info("[VELOCITY]: broadcast packet found!")
+                            yield self.decode_velocity_broadcast(packet)
+                            received_packets += 1
+                        else:
+                            logging.error(f"[VELOCITY]: invalid packet length, got {len(packet)}, packet: {packet}!")
                     else:
                         logging.error(f"[BROADCAST ERROR]: packet with addr {packet_addr}, reg: {start_reg.name} found "
                                       f"of length: {len(packet)} bytes, "
@@ -544,6 +560,20 @@ class UM7Serial(UM7Registers):
         payload = packet[5:-2]
         gyro_bias_x, gyro_bias_y, gyro_bias_z, = struct.unpack('>fff', payload[0:12])
         return UM7GyroBiasPacket(gyro_bias_x=gyro_bias_x, gyro_bias_y=gyro_bias_y, gyro_bias_z=gyro_bias_z)
+
+    def decode_gps_broadcast(self, packet) -> UM7GPSPacket:
+        payload = packet[5:-2]
+        gps_latitude, gps_longitude, gps_altitude, gps_course, gps_speed, gps_time = struct.unpack('>ffffff', payload[0:24])
+        return UM7GPSPacket(
+            gps_latitude=gps_latitude, gps_longitude=gps_longitude, gps_altitude=gps_altitude, gps_course=gps_course, gps_speed=gps_speed, gps_time=gps_time
+        )
+
+    def decode_velocity_broadcast(self, packet) -> UM7VelocityPacket:
+        payload = packet[5:-2]
+        velocity_north, velocity_east, velocity_up, velocity_time = struct.unpack('>ffff', payload[0:16])
+        return UM7VelocityPacket(
+            velocity_north=velocity_north, velocity_east=velocity_east, velocity_up=velocity_up, velocity_time=velocity_time
+        )
 
     def decode_health_broadcast(self, packet) -> UM7HealthPacket:
         payload = packet[5:-2]

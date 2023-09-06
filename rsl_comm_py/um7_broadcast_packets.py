@@ -202,6 +202,24 @@ class UM7GyroBiasPacket:
                f"gyro_bias=[{self.gyro_bias_x:>+8.3f}, {self.gyro_bias_y:>+8.3f}, {self.gyro_bias_z:>+8.3f}])"
 
 
+@dataclass
+class UM7GPSPacket:
+    gps_latitude: float
+    gps_longitude: float
+    gps_altitude: float
+    gps_course: float
+    gps_speed: float
+    gps_time: float
+
+    def __repr__(self):
+        return f"GPSPacket("\
+               f"latitude={self.gps_latitude}, " \
+               f"longitude={self.gps_longitude}, " \
+               f"course={self.gps_course}, " \
+               f"speed={self.gps_speed}, " \
+               f"time_stamp={self.gps_time})"
+
+
 if __name__ == '__main__':
     pass
 
