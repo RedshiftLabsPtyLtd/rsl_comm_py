@@ -81,20 +81,30 @@ class UM7EulerPacket:
 @dataclass
 class UM7HealthPacket:
     health: int
+    sats_used: int
+    hdop: int
+    sats_in_view: int
+    ovf: bool
+    mg_n: bool
+    acc_n: bool
+    accel: bool
+    gyro: bool
+    mag: bool
+    gps: bool
 
     def __repr__(self):
         return f"HealthPacket("\
                f"raw_value=0x{self.health:04X}   ->   " \
-               f"SATS_USED={(self.health >> 26) & 0x3F}, " \
-               f"HDOP={(self.health >> 16) & 0x7F}, " \
-               f"SATS_IN_VIEW={(self.health >> 10) & 0x3F}, " \
-               f"OVF={bool((self.health >> 8) & 0x01)}, " \
-               f"MG_N={bool((self.health >> 5) & 0x01)}, " \
-               f"ACC_N={bool((self.health >> 4) & 0x01)}, " \
-               f"ACCEL={bool((self.health >> 3) & 0x01)}, "\
-               f"GYRO={bool((self.health >> 2) & 0x01)}, " \
-               f"MAG={bool((self.health >> 1) & 0x01)}, " \
-               f"GPS={bool((self.health >> 0) & 0x01)})"
+               f"SATS_USED={self.sats_used}, " \
+               f"HDOP={self.hdop}, " \
+               f"SATS_IN_VIEW={self.sats_in_view}, " \
+               f"OVF={self.ovf}, " \
+               f"MG_N={self.mg_n}, " \
+               f"ACC_N={self.acc_n}, " \
+               f"ACCEL={self.accel}, "\
+               f"GYRO={self.gyro}, " \
+               f"MAG={self.mag}, " \
+               f"GPS={self.gps})"
 
 
 @dataclass

@@ -578,7 +578,12 @@ class UM7Serial(UM7Registers):
     def decode_health_broadcast(self, packet) -> UM7HealthPacket:
         payload = packet[5:-2]
         health, = struct.unpack('>I', payload[0:4])
-        return UM7HealthPacket(health=health)
+        return UM7HealthPacket(
+            health=health, sats_used=(health >> 26) & 0x3F, hdop=(health >> 16) & 0x7F, sats_in_view=(health >> 10) & 0x3F,
+            ovf=bool((health >> 8) & 0x01), mg_n=bool((health >> 5) & 0x01), acc_n=bool((health >> 4) & 0x01),
+            accel=bool((health >> 3) & 0x01), gyro=bool((health >> 2) & 0x01), mag=bool((health >> 1) & 0x01),
+            gps=bool((health >> 0) & 0x01)
+        )
 
     def hidden_regs_values(self) -> List[Dict]:
         hidden_regs_as_json = []
